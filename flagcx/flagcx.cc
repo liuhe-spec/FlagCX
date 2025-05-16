@@ -59,31 +59,22 @@ flagcxResult_t wrapper_deviceMemcpy(void *dst, void *src, size_t size,
   return deviceAdaptor->deviceMemcpy(dst, src, size, type, stream, NULL);
 }
 
-static struct flagcxDeviceHandle globalDeviceHandle{
-    // Basic functions
-    deviceAdaptor->deviceSynchronize,
-    wrapper_deviceMemcpy,
-    deviceAdaptor->deviceMemset,
-    deviceAdaptor->deviceMalloc,
-    deviceAdaptor->deviceFree,
-    deviceAdaptor->setDevice,
-    deviceAdaptor->getDevice,
-    deviceAdaptor->getDeviceCount,
-    deviceAdaptor->getVendor,
-    // Stream functions
-    deviceAdaptor->streamCreate,
-    deviceAdaptor->streamDestroy,
-    deviceAdaptor->streamCopy,
-    deviceAdaptor->streamFree,
-    deviceAdaptor->streamSynchronize,
-    deviceAdaptor->streamQuery,
-    deviceAdaptor->streamWaitEvent,
-    // Event functions
-    deviceAdaptor->eventCreate,
-    deviceAdaptor->eventDestroy,
-    deviceAdaptor->eventRecord,
-    deviceAdaptor->eventSynchronize,
-    deviceAdaptor->eventQuery,
+static struct flagcxDeviceHandle globalDeviceHandle {
+  // Basic functions
+  deviceAdaptor->deviceSynchronize, wrapper_deviceMemcpy,
+      deviceAdaptor->deviceMemset, deviceAdaptor->deviceMalloc,
+      deviceAdaptor->deviceFree, deviceAdaptor->setDevice,
+      deviceAdaptor->getDevice, deviceAdaptor->getDeviceCount,
+      deviceAdaptor->getVendor,
+      // Stream functions
+      deviceAdaptor->streamCreate, deviceAdaptor->streamDestroy,
+      deviceAdaptor->streamCopy, deviceAdaptor->streamFree,
+      deviceAdaptor->streamSynchronize, deviceAdaptor->streamQuery,
+      deviceAdaptor->streamWaitEvent,
+      // Event functions
+      deviceAdaptor->eventCreate, deviceAdaptor->eventDestroy,
+      deviceAdaptor->eventRecord, deviceAdaptor->eventSynchronize,
+      deviceAdaptor->eventQuery,
 };
 
 flagcxResult_t flagcxEnsureCommReady(flagcxComm_t comm) {
@@ -1073,10 +1064,35 @@ flagcxResult_t flagcxBroadcast(const void *sendbuff, void *recvbuff,
       // TODO: to be implemented.
       return flagcxNotSupported;
     } else {
-      flagcxC2cPlanner planner(count, count, comm, flagcxCommOpBroadcast,
-                               flagcxRedNoOp);
-      planner.findStrategyBroadcast(root);
-      planner.execute(sendbuff, recvbuff, datatype, -1, stream);
+      // Experimental for multi-nic support
+      // Construct flagcxC2cPlanner and find corresponding strategy
+      flagcxC2cPlanner planner;
+      auto hashValue =
+          getC2cCommPatternHash(count, comm->cluster_ids[root],
+                                flagcxCommOpBroadcast, flagcxRedNoOp, comm);
+      if (!planCache.get(hashValue, planner)) {
+        INFO(FLAGCX_COLL,
+             "No available plan is found, create a new one with "
+             "communication pattern "
+             "(count, rootClsuterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
+             "%ld",
+             count, comm->cluster_ids[root], flagcxCommOpBroadcast,
+             flagcxRedNoOp, (size_t)((uintptr_t)comm), hashValue);
+        planner = flagcxC2cPlanner(count, count, comm->cluster_ids[root], comm,
+                                   flagcxCommOpBroadcast, flagcxRedNoOp);
+        FLAGCXCHECK(planner.findStrategy());
+        planCache.put(hashValue, planner);
+      } else {
+        INFO(FLAGCX_COLL,
+             "Found available plan with communication pattern "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
+             "%ld",
+             count, comm->cluster_ids[root], flagcxCommOpBroadcast,
+             flagcxRedNoOp, (size_t)((uintptr_t)comm), hashValue);
+      }
+      FLAGCXCHECK(planner.execute(sendbuff, recvbuff, datatype, root, stream));
     }
   }
   return flagcxSuccess;
@@ -1148,18 +1164,20 @@ flagcxResult_t flagcxAllReduce(const void *sendbuff, void *recvbuff,
       // Experimental for multi-nic support
       // Construct flagcxC2cPlanner and find corresponding strategy
       flagcxC2cPlanner planner;
-      auto hashValue =
-          getC2cCommPatternHash(count, flagcxCommOpAllReduce, op, comm);
+      auto hashValue = getC2cCommPatternHash(
+          count, comm->nclusters, flagcxCommOpAllReduce, op,
+          comm); // use nclusters as rootClusterId for hash
       if (!planCache.get(hashValue, planner)) {
         INFO(FLAGCX_COLL,
              "No available plan is found, create a new one with "
              "communication pattern "
-             "(count, commOp, redOp, comm) = (%ld, %d, %d, %ld), hashValue = "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
              "%ld",
-             count, flagcxCommOpAllReduce, op, (size_t)((uintptr_t)comm),
-             hashValue);
+             count, comm->nclusters, flagcxCommOpAllReduce, op,
+             (size_t)((uintptr_t)comm), hashValue);
         planner =
-            flagcxC2cPlanner(count, count, comm, flagcxCommOpAllReduce, op);
+            flagcxC2cPlanner(count, count, -1, comm, flagcxCommOpAllReduce, op);
         FLAGCXCHECK(planner.findStrategy());
         planCache.put(hashValue, planner);
         // TODO: add estimator part
@@ -1169,10 +1187,11 @@ flagcxResult_t flagcxAllReduce(const void *sendbuff, void *recvbuff,
       } else {
         INFO(FLAGCX_COLL,
              "Found available plan with communication pattern "
-             "(count, commOp, redOp, comm) = (%ld, %d, %d, %ld), hashValue = "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
              "%ld",
-             count, flagcxCommOpAllReduce, op, (size_t)((uintptr_t)comm),
-             hashValue);
+             count, comm->nclusters, flagcxCommOpAllReduce, op,
+             (size_t)((uintptr_t)comm), hashValue);
       }
       FLAGCXCHECK(planner.execute(sendbuff, recvbuff, datatype, -1, stream));
     }
@@ -1248,26 +1267,29 @@ flagcxResult_t flagcxReduceScatter(const void *sendbuff, void *recvbuff,
       // Experimental for multi-nic support
       // Construct flagcxC2cPlanner and find corresponding strategy
       flagcxC2cPlanner planner;
-      auto hashValue =
-          getC2cCommPatternHash(recvcount, flagcxCommOpReduceScatter, op, comm);
+      auto hashValue = getC2cCommPatternHash(
+          recvcount, comm->nclusters, flagcxCommOpReduceScatter, op,
+          comm); // use nclusters as rootClusterId for hash
       if (!planCache.get(hashValue, planner)) {
         INFO(FLAGCX_COLL,
              "No available plan is found, create a new one with "
              "communication pattern "
-             "(count, commOp, redOp, comm) = (%ld, %d, %d, %ld), hashValue = "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
              "%ld",
-             recvcount, flagcxCommOpReduceScatter, op,
+             recvcount, comm->nclusters, flagcxCommOpReduceScatter, op,
              (size_t)((uintptr_t)comm), hashValue);
-        planner = flagcxC2cPlanner(comm->nranks * recvcount, recvcount, comm,
-                                   flagcxCommOpReduceScatter, op);
+        planner = flagcxC2cPlanner(comm->nranks * recvcount, recvcount, -1,
+                                   comm, flagcxCommOpReduceScatter, op);
         FLAGCXCHECK(planner.findStrategy());
         planCache.put(hashValue, planner);
       } else {
         INFO(FLAGCX_COLL,
              "Found available plan with communication pattern "
-             "(count, commOp, redOp, comm) = (%ld, %d, %d, %ld), hashValue = "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
              "%ld",
-             recvcount, flagcxCommOpReduceScatter, op,
+             recvcount, comm->nclusters, flagcxCommOpReduceScatter, op,
              (size_t)((uintptr_t)comm), hashValue);
       }
       FLAGCXCHECK(planner.execute(sendbuff, recvbuff, datatype, -1, stream));
@@ -1336,26 +1358,30 @@ flagcxResult_t flagcxAllGather(const void *sendbuff, void *recvbuff,
       // Experimental for multi-nic support
       // Construct flagcxC2cPlanner and find corresponding strategy
       flagcxC2cPlanner planner;
-      auto hashValue = getC2cCommPatternHash(sendcount, flagcxCommOpAllGather,
-                                             flagcxRedNoOp, comm);
+      auto hashValue = getC2cCommPatternHash(
+          sendcount, comm->nclusters,
+          flagcxCommOpAllGather, // use nclusters as rootClusterId for hash
+          flagcxRedNoOp, comm);
       if (!planCache.get(hashValue, planner)) {
         INFO(FLAGCX_COLL,
              "No available plan is found, create a new one with "
              "communication pattern "
-             "(count, commOp, redOp, comm) = (%ld, %d, %d, %ld), hashValue = "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
              "%ld",
-             sendcount, flagcxCommOpAllGather, flagcxRedNoOp,
+             sendcount, comm->nclusters, flagcxCommOpAllGather, flagcxRedNoOp,
              (size_t)((uintptr_t)comm), hashValue);
-        planner = flagcxC2cPlanner(sendcount, sendcount * comm->nranks, comm,
-                                   flagcxCommOpAllGather, flagcxRedNoOp);
+        planner = flagcxC2cPlanner(sendcount, sendcount * comm->nranks, -1,
+                                   comm, flagcxCommOpAllGather, flagcxRedNoOp);
         FLAGCXCHECK(planner.findStrategy());
         planCache.put(hashValue, planner);
       } else {
         INFO(FLAGCX_COLL,
              "Found available plan with communication pattern "
-             "(count, commOp, redOp, comm) = (%ld, %d, %d, %ld), hashValue = "
+             "(count, rootClusterId, commOp, redOp, comm) = (%ld, %d, %d, %d, "
+             "%ld), hashValue = "
              "%ld",
-             sendcount, flagcxCommOpAllGather, flagcxRedNoOp,
+             sendcount, comm->nclusters, flagcxCommOpAllGather, flagcxRedNoOp,
              (size_t)((uintptr_t)comm), hashValue);
       }
       FLAGCXCHECK(planner.execute(sendbuff, recvbuff, datatype, -1, stream));

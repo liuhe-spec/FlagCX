@@ -12,8 +12,9 @@
 #include <string>
 #include <unordered_map>
 
-size_t getC2cCommPatternHash(size_t count, flagcxCommOp_t commOp,
-                             flagcxRedOp_t redOp, flagcxComm_t comm);
+size_t getC2cCommPatternHash(size_t count, size_t rootClusterId,
+                             flagcxCommOp_t commOp, flagcxRedOp_t redOp,
+                             flagcxComm_t comm);
 
 template <typename Key, typename Value>
 class flagcxLRUCache {
@@ -59,7 +60,9 @@ private:
 
 // homoType: 0, pre; 1, homoInter; 2, post,
 // mode: 0, multiNic+eachNicPerRank; 1, normal; 2, single-nic
-flagcxCommOp_t getC2cHomoCommOp(flagcxCommOp_t commOp, int homoType, int mode);
+// isRootCluster: 0, no-root cluster; 1, root cluster
+flagcxCommOp_t getC2cHomoCommOp(flagcxCommOp_t commOp, int homoType, int mode,
+                                int isRootCluster);
 
 struct flagcxBufferInfo {
 public:
@@ -172,8 +175,9 @@ public:
 class flagcxC2cPlanner {
 public:
   friend class flagcxAlgoTimeEstimator;
-  flagcxC2cPlanner(int sendCount, int recvCount, flagcxComm_t comm,
-                   flagcxCommOp_t commOp, flagcxRedOp_t redOp);
+  flagcxC2cPlanner(int sendCount, int recvCount, int rootClusterId,
+                   flagcxComm_t comm, flagcxCommOp_t commOp,
+                   flagcxRedOp_t redOp);
   ~flagcxC2cPlanner();
   flagcxC2cPlanner() = default;
   flagcxC2cPlanner(const flagcxC2cPlanner &) = default;
@@ -192,6 +196,7 @@ public:
 private:
   int sendCount_;
   int recvCount_;
+  int rootClusterId_;
   flagcxComm_t comm_;
   flagcxCommOp_t commOp_;
   flagcxRedOp_t redOp_;
@@ -205,6 +210,7 @@ private:
   int homoInterRootRank_;
   int homoInterRanks_;
   int totalCount_; // equal to either sendCount_ or recvCount_
+  int isRootCluster_;
   int clusterCount_;
   int clusterOffset_;
   int multiNic_;
