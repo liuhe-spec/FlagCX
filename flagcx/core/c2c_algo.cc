@@ -46,6 +46,7 @@ flagcxCommOp_t getC2cHomoCommOp(flagcxCommOp_t commOp, int homoType, int mode,
     case flagcxCommOpGather:
       return flagcxCommOpGather;
     case flagcxCommOpScatter:
+      return flagcxCommOpScatter;
     case flagcxCommOpReduce:
       switch (homoType) {
         case 0:
