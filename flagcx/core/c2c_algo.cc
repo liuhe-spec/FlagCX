@@ -481,10 +481,10 @@ flagcxResult_t flagcxC2cHomoFunc::run(const void *sendbuff, void *recvbuff,
           count_, datatype, (rootRank_ == -1) ? root : rootRank_,
           isHomoInterComm_ ? comm->homoInterComm : comm->homo_comm, stream);
     case flagcxCommOpRecv:
-      return cclAdaptors[flagcxCCLAdaptorDevice]->send(
-          const_cast<const void *>(static_cast<void *>(
+      return cclAdaptors[flagcxCCLAdaptorDevice]->recv(
+          static_cast<void *>(
               static_cast<char *>(const_cast<void *>(recvbuff)) +
-              sendOffset_ * getFlagcxDataTypeSize(datatype))),
+              recvOffset_ * getFlagcxDataTypeSize(datatype)),
           count_, datatype, (rootRank_ == -1) ? root : rootRank_,
           isHomoInterComm_ ? comm->homoInterComm : comm->homo_comm, stream);
     case flagcxCommOpAlltoAll:
@@ -1179,7 +1179,8 @@ flagcxResult_t flagcxC2cPlanner::findStrategy() {
         cid += 1;
       }
       heteroFuncList_.push_back(std::move(heteroFunc));
-    } else if (commOp_ == flagcxCommOpAllGather || commOp_ == flagcxCommOpGather) {
+    } else if (commOp_ == flagcxCommOpAllGather ||
+               commOp_ == flagcxCommOpGather) {
       heteroAndHomoInterFuncLoops_ = 1;
       flagcxC2cHeteroFunc heteroFunc = flagcxC2cHeteroFunc();
       int recvOffset = 0;
@@ -1199,7 +1200,7 @@ flagcxResult_t flagcxC2cPlanner::findStrategy() {
         recvOffset += comm_->cluster_sizes[i];
       }
       heteroFuncList_.push_back(std::move(heteroFunc));
-    }else if (commOp_ == flagcxCommOpScatter) {
+    } else if (commOp_ == flagcxCommOpScatter) {
       heteroAndHomoInterFuncLoops_ = 1;
       flagcxC2cHeteroFunc heteroFunc = flagcxC2cHeteroFunc();
       int sendOffset = 0;
