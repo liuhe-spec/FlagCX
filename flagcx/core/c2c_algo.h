@@ -223,6 +223,7 @@ private:
   int heteroAndHomoInterFuncLoops_; // number of loops for heteroFunc and
                                     // homoInterFunc
   int postHomoFuncLoops_;           // number of loops for postHomoFunc
+  int SendRecv_Loops_;
   int strategyFound_;
   flagcxInterRankBufferInfoManager interRankBufferInfoManager_;
   flagcxC2cRefreshFunc refreshFunc_;
