@@ -16,6 +16,8 @@
 #include <pthread.h>
 #include <queue>
 #include <stdio.h>
+#include "flagcx_async.h"
+#include "cuda_runtime.h"
 
 __thread int flagcxGroupDepth = 0;
 __thread bool flagcxGroupJobAbortFlag = false;
@@ -156,7 +158,8 @@ static flagcxResult_t groupLaunch(struct flagcxAsyncJob *job_) {
           op->args.chunkSteps = (p2p->bytes + CHUNKSIZE - 1) / (CHUNKSIZE);
           op->args.sendStepMask = MAXSTEPS - 1;
           op->stream = p2p->stream;
-          flagcxCalloc((bool **)&op->args.hlArgs, 1);
+          //flagcxCalloc((bool **)&op->args.hlArgs, 1);
+	  cudaHostAlloc((void **)&op->args.hlArgs, sizeof(bool), cudaHostAllocMapped);
           hostFuncQueue.push({op->stream, (void *)op->args.hlArgs});
           FLAGCXCHECK(deviceAdaptor->launchHostFunc(
               op->stream, cpuStreamWait, (void *)&op->args.eventReady));
@@ -181,7 +184,8 @@ static flagcxResult_t groupLaunch(struct flagcxAsyncJob *job_) {
           op->args.chunkSteps = (p2p->bytes + CHUNKSIZE - 1) / (CHUNKSIZE);
           op->args.sendStepMask = MAXSTEPS - 1;
           op->stream = p2p->stream;
-          flagcxCalloc((bool **)&op->args.hlArgs, 1);
+          //flagcxCalloc((bool **)&op->args.hlArgs, 1);
+	  cudaHostAlloc((void **)&op->args.hlArgs, sizeof(bool), cudaHostAllocMapped);
           hostFuncQueue.push({op->stream, (void *)op->args.hlArgs});
           FLAGCXCHECK(deviceAdaptor->launchHostFunc(
               op->stream, cpuStreamWait, (void *)&op->args.eventReady));
@@ -198,8 +202,9 @@ static flagcxResult_t groupLaunch(struct flagcxAsyncJob *job_) {
     struct hostFuncArgs args;
     args = hostFuncQueue.front();
     hostFuncQueue.pop();
-    FLAGCXCHECK(
-        deviceAdaptor->launchHostFunc(args.stream, cpuAsyncLaunch, args.args));
+    //FLAGCXCHECK(deviceAdaptor->launchHostFunc(args.stream, cpuAsyncLaunch, args.args));
+    FLAGCXCHECK(launchAsyncKernel(args.stream, args.args));
+
   }
 
   while (!flagcxIntruQueueEmpty(asyncJobsMain)) {
