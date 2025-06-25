@@ -10,11 +10,11 @@
 #include "flagcx_hetero.h"
 #include "param.h"
 
+#include "launch_kernel.h"
 #include <cassert>
 #include <stdio.h>
 #include <string.h>
 #include <unordered_map>
-
 #define FLAGCX_CACHE_CAPACITY 16
 static flagcxLRUCache<size_t, flagcxC2cPlanner>
     planCache(FLAGCX_CACHE_CAPACITY);
@@ -470,6 +470,13 @@ flagcxResult_t flagcxCommInitRank(flagcxComm_t *comm, int nranks,
           (*comm)->homoInterMyRank, NULL));
     }
     free(nicDistanceData);
+    const char *deviceFuncEnv = flagcxGetEnv("FLAGCX_DEVICE_FUNC");
+    if (deviceFuncEnv && strcmp(deviceFuncEnv, "1") == 0) {
+      if (loadAsyncKernelSymbol() != flagcxSuccess) {
+        printf("Failed to load async kernel\n");
+        exit(1);
+      }
+    }
   }
 
   free(clusterInterRankData);

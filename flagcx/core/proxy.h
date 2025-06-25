@@ -118,6 +118,7 @@ struct flagcxProxyArgs {
   /*for launch*/
   bool *volatile hlArgs;
   bool *volatile dlArgs;
+  const char *deviceFunction;
 
   union flagcxProxyOpSpecifics specifics;
 };

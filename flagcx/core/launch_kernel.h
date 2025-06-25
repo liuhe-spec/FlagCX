@@ -1,20 +1,36 @@
 #ifndef FLAGCX_LAUNCH_KERNEL_H_
 #define FLAGCX_LAUNCH_KERNEL_H_
-
-#include "topo.h"
+#pragma once
+#include "adaptor.h"
 #include "debug.h"
-#include <stdlib.h>
+#include "flagcx.h"
+#include "param.h"
+#include "topo.h"
+#include "utils.h"
+#include <dlfcn.h>
 #include <getopt.h>
+#include <iomanip>
+#include <iostream>
+#include <math.h>
 #include <memory.h>
 #include <stdio.h>
-#include <math.h>
-#include <iostream>
-#include <iomanip>
+#include <stdlib.h>
 #include <unistd.h>
-#include <dlfcn.h>
-#include "adaptor.h"
-#include "utils.h"
-#include "param.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef flagcxResult_t (*launchAsyncKernel_t)(flagcxStream_t stream,
+                                              void *args_out_ptr);
+
+launchAsyncKernel_t getLaunchAsyncKernel();
+
+flagcxResult_t loadAsyncKernelSymbol();
+
+#ifdef __cplusplus
+}
+#endif
 
 struct hostLaunchArgs{
     volatile bool stopLaunch;
