@@ -26,7 +26,7 @@ typedef flagcxResult_t (*launchAsyncKernel_t)(flagcxStream_t stream,
 
 launchAsyncKernel_t getLaunchAsyncKernel();
 
-flagcxResult_t loadAsyncKernelSymbol();
+flagcxResult_t loadAsyncKernelSymbol(const char *path);
 
 #ifdef __cplusplus
 }

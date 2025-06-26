@@ -3,17 +3,15 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
-static launchAsyncKernel_t launchAsyncKernelFn = nullptr;
-
-flagcxResult_t loadAsyncKernelSymbol() {
-  void *handle = dlopen("devicefunc.so", RTLD_LAZY);
+flagcxResult_t loadAsyncKernelSymbol(const char *path) {
+  void *handle = dlopen(path, RTLD_LAZY);
   if (!handle) {
     fprintf(stderr, "dlopen failed: %s\n", dlerror());
     return flagcxRemoteError;
   }
 
-  launchAsyncKernelFn = (launchAsyncKernel_t)dlsym(handle, "launchAsyncKernel");
-  if (!launchAsyncKernelFn) {
+  deviceAdaptor->launchDeviceFunc = (launchAsyncKernel_t)dlsym(handle, "launchAsyncKernel");
+  if (!deviceAdaptor->launchDeviceFunc) {
     fprintf(stderr, "dlsym failed: %s\n", dlerror());
     return flagcxRemoteError;
   }
@@ -21,7 +19,9 @@ flagcxResult_t loadAsyncKernelSymbol() {
   return flagcxSuccess;
 }
 
-launchAsyncKernel_t getLaunchAsyncKernel() { return launchAsyncKernelFn; }
+launchAsyncKernel_t getLaunchAsyncKernel() {
+  return deviceAdaptor->launchDeviceFunc;
+}
 void cpuStreamWait(void *_args){
     bool * volatile args = (bool *) _args;
     __atomic_store_n(args, 1, __ATOMIC_RELAXED);

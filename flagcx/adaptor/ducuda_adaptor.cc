@@ -307,6 +307,9 @@ struct flagcxDeviceAdaptor ducudaAdaptor{
           // share_mem, void *stream, void *memHandle);
     NULL, // flagcxResult_t (*copyArgsInit)(void **args);
     NULL, // flagcxResult_t (*copyArgsFree)(void *args);
+    NULL, // flagcxResult_t
+          // (*launchDeviceFunc)(flagcxStream_t stream,
+          // void *args);
     // Others
     ducudaAdaptorGetDeviceProperties, // flagcxResult_t
                                       // (*getDeviceProperties)(struct
