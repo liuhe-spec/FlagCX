@@ -1,5 +1,4 @@
 #include "launch_kernel.h"
-
 #include <dlfcn.h>
 #include <stdio.h>
 
@@ -10,7 +9,8 @@ flagcxResult_t loadAsyncKernelSymbol(const char *path) {
     return flagcxRemoteError;
   }
 
-  deviceAdaptor->launchDeviceFunc = (launchAsyncKernel_t)dlsym(handle, "launchAsyncKernel");
+  deviceAdaptor->launchDeviceFunc =
+      (flagcxResult_t (*)(flagcxStream_t, void *))dlsym(handle, "launchAsyncKernel");
   if (!deviceAdaptor->launchDeviceFunc) {
     fprintf(stderr, "dlsym failed: %s\n", dlerror());
     return flagcxRemoteError;
@@ -19,9 +19,6 @@ flagcxResult_t loadAsyncKernelSymbol(const char *path) {
   return flagcxSuccess;
 }
 
-launchAsyncKernel_t getLaunchAsyncKernel() {
-  return deviceAdaptor->launchDeviceFunc;
-}
 void cpuStreamWait(void *_args){
     bool * volatile args = (bool *) _args;
     __atomic_store_n(args, 1, __ATOMIC_RELAXED);

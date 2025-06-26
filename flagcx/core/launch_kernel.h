@@ -21,10 +21,6 @@
 extern "C" {
 #endif
 
-typedef flagcxResult_t (*launchAsyncKernel_t)(flagcxStream_t stream,
-                                              void *args_out_ptr);
-
-launchAsyncKernel_t getLaunchAsyncKernel();
 
 flagcxResult_t loadAsyncKernelSymbol(const char *path);
 

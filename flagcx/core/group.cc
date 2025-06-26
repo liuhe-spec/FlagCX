@@ -157,7 +157,6 @@ static flagcxResult_t groupLaunch(struct flagcxAsyncJob *job_) {
           op->args.sendStepMask = MAXSTEPS - 1;
           op->stream = p2p->stream;
           flagcxCalloc((bool **)&op->args.hlArgs, 1);
-          // op->args.deviceFunction = flagcxGetEnv("FLAGCX_DEVICE_FUNC");
           if (deviceAdaptor->launchDeviceFunc) {
             deviceAdaptor->deviceMalloc((void **)&op->args.dlArgs, sizeof(bool),
                                         flagcxMemDevice, op->stream);
@@ -213,7 +212,6 @@ static flagcxResult_t groupLaunch(struct flagcxAsyncJob *job_) {
     hostFuncQueue.pop();
     if (deviceAdaptor->launchDeviceFunc) {
       FLAGCXCHECK(deviceAdaptor->launchDeviceFunc(args.stream, args.args));
-      // FLAGCXCHECK(launchAsyncKernel(args.stream, args.args));
     } else {
       FLAGCXCHECK(deviceAdaptor->launchHostFunc(args.stream, cpuAsyncLaunch,
                                                 args.args));
