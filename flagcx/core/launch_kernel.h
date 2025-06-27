@@ -36,5 +36,21 @@ struct hostLaunchArgs{
 void cpuAsyncLaunch(void *_args);
 void cpuStreamWait(void *_args);
 
+/*
+// Reference CUDA implementation for async kernel launch (for future adaptor implementations)
+
+__global__ void asyncLaunchKernel(const volatile bool *__restrict__ flag) {
+  while (!(*flag)) {
+    // busy wait
+  }
+}
+
+flagcxResult_t launchAsyncKernel(flagcxStream_t stream, void *args_out_ptr) {
+  bool *d_flag = reinterpret_cast<bool *>(args_out_ptr);
+  asyncLaunchKernel<<<1, 1, 0, stream->base>>>(d_flag);
+  return flagcxSuccess;
+}
+*/
+
 #endif
 
