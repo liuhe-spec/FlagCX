@@ -306,7 +306,7 @@ struct flagcxDeviceAdaptor ixcudaAdaptor {
       NULL, // flagcxResult_t (*copyArgsInit)(void **args);
       NULL, // flagcxResult_t (*copyArgsFree)(void *args);
       NULL, // flagcxResult_t (*launchDeviceFunc)(flagcxStream_t stream, void
-                        // *args);
+            // *args);
       // Others
       ixcudaAdaptorGetDeviceProperties, // flagcxResult_t
                                         // (*getDeviceProperties)(struct

@@ -10,7 +10,8 @@ flagcxResult_t loadAsyncKernelSymbol(const char *path) {
   }
 
   deviceAdaptor->launchDeviceFunc =
-      (flagcxResult_t (*)(flagcxStream_t, void *))dlsym(handle, "launchAsyncKernel");
+      (flagcxResult_t(*)(flagcxStream_t, void *))dlsym(handle,
+                                                       "launchAsyncKernel");
   if (!deviceAdaptor->launchDeviceFunc) {
     fprintf(stderr, "dlsym failed: %s\n", dlerror());
     return flagcxRemoteError;
@@ -19,14 +20,14 @@ flagcxResult_t loadAsyncKernelSymbol(const char *path) {
   return flagcxSuccess;
 }
 
-void cpuStreamWait(void *_args){
-    bool * volatile args = (bool *) _args;
-    __atomic_store_n(args, 1, __ATOMIC_RELAXED);
+void cpuStreamWait(void *_args) {
+  bool *volatile args = (bool *)_args;
+  __atomic_store_n(args, 1, __ATOMIC_RELAXED);
 }
 
-
-void cpuAsyncLaunch(void *_args){
-    bool * volatile args = (bool *) _args;
-    while(!__atomic_load_n(args, __ATOMIC_RELAXED));
-    free(args);
+void cpuAsyncLaunch(void *_args) {
+  bool *volatile args = (bool *)_args;
+  while (!__atomic_load_n(args, __ATOMIC_RELAXED))
+    ;
+  free(args);
 }

@@ -21,23 +21,23 @@
 extern "C" {
 #endif
 
-
 flagcxResult_t loadAsyncKernelSymbol(const char *path);
 
 #ifdef __cplusplus
 }
 #endif
 
-struct hostLaunchArgs{
-    volatile bool stopLaunch;
-    volatile bool retLaunch;
+struct hostLaunchArgs {
+  volatile bool stopLaunch;
+  volatile bool retLaunch;
 };
 
 void cpuAsyncLaunch(void *_args);
 void cpuStreamWait(void *_args);
 
 /*
-// Reference CUDA implementation for async kernel launch (for future adaptor implementations)
+// Reference CUDA implementation for async kernel launch (for future adaptor
+implementations)
 
 __global__ void asyncLaunchKernel(const volatile bool *__restrict__ flag) {
   while (!(*flag)) {
@@ -53,4 +53,3 @@ flagcxResult_t launchAsyncKernel(flagcxStream_t stream, void *args_out_ptr) {
 */
 
 #endif
-
