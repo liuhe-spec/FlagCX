@@ -559,17 +559,17 @@ flagcxC2cPlanner::flagcxC2cPlanner(int sendCount, int recvCount, int rootRank,
   nSeqPostSteps_ = 1;
   // pipeline optimizations for AllGather
   if (commOp_ == flagcxCommOpAllGather) {
-    if (eachNicPerRank_) {                 // rank_local
+    if (eachNicPerRank_) { // rank_local
       nSeqPreSteps_ = 0;
       nPipePreSteps_ = 1;
       nSeqInterSteps_ = 0;
       nPipePostSteps_ = comm_->nclusters - 2;
-    } else if (multiNic_) {                // general multi-nic
+    } else if (multiNic_) { // general multi-nic
       nSeqPreSteps_ = 1;
       nPipePreSteps_ = 0;
       nSeqInterSteps_ = 1;
       nPipePostSteps_ = comm_->nclusters - 2;
-    } else {                               // single nic
+    } else { // single nic
       nSeqPreSteps_ = 1;
       nPipePreSteps_ = 0;
       nSeqInterSteps_ = 0;
@@ -587,7 +587,7 @@ flagcxC2cPlanner::flagcxC2cPlanner(int sendCount, int recvCount, int rootRank,
   for (int i = 0; i < nPipePostSteps_ + nSeqPostSteps_; ++i) {
     postHomoFuncSteps_.emplace_back();
   }
-  
+
   // calculate clusterOffset_ and clusterCount_
   clusterOffset_ = 0;
   for (int i = 0; i < clusterId_; ++i) {
@@ -1300,13 +1300,11 @@ flagcxResult_t flagcxC2cPlanner::findStrategy() {
                     size_t step =
                         (sendClusterId + comm_->nclusters - 1 - recvClusterId) %
                         comm_->nclusters;
-                    heteroFuncStep[step].addP2pOp(rank_, it->peerRank_,
-                                                  offset, it->count_,
-                                                  it->isRecv_);
+                    heteroFuncStep[step].addP2pOp(rank_, it->peerRank_, offset,
+                                                  it->count_, it->isRecv_);
                   } else {
-                    heteroFuncStep[0].addP2pOp(rank_, it->peerRank_,
-                                               offset, it->count_,
-                                               it->isRecv_);
+                    heteroFuncStep[0].addP2pOp(rank_, it->peerRank_, offset,
+                                               it->count_, it->isRecv_);
                   }
                 }
               }
@@ -1621,10 +1619,10 @@ flagcxResult_t flagcxC2cPlanner::execute(const void *sendbuff, void *recvbuff,
   cclAdaptors[flagcxCCLAdaptorDevice]->groupStart();
   for (int s = 0; s < nSeqPreSteps_; ++s) {
     for (int i = 0; i < preHomoFuncSteps_[s].size(); ++i) {
-      preHomoFuncSteps_[s][i].run(
-          sendbuff, recvbuff, scratchBuffer_, datatype, redOp_,
-          comm_->globalrank2homorank[root], comm_, stream, sendCounts_,
-          sDispls_, recvCounts_, rDispls_);
+      preHomoFuncSteps_[s][i].run(sendbuff, recvbuff, scratchBuffer_, datatype,
+                                  redOp_, comm_->globalrank2homorank[root],
+                                  comm_, stream, sendCounts_, sDispls_,
+                                  recvCounts_, rDispls_);
     }
   }
   cclAdaptors[flagcxCCLAdaptorDevice]->groupEnd();
