@@ -315,8 +315,8 @@ struct flagcxDeviceAdaptor ducudaAdaptor {
                                         // (*getDeviceProperties)(struct
                                         // flagcxDevProps *props, int dev);
       ducudaAdaptorGetDevicePciBusId,   // flagcxResult_t
-                                      // (*getDevicePciBusId)(char *pciBusId,
-                                      // int len, int dev);
+                                        // (*getDevicePciBusId)(char *pciBusId,
+                                        // int len, int dev);
       ducudaAdaptorGetDeviceByPciBusId, // flagcxResult_t
                                         // (*getDeviceByPciBusId)(int
                                         // *dev, const char *pciBusId);

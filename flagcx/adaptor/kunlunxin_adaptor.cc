@@ -320,8 +320,8 @@ struct flagcxDeviceAdaptor kunlunAdaptor {
                                         // (*getDeviceProperties)(struct
                                         // flagcxDevProps *props, int dev);
       kunlunAdaptorGetDevicePciBusId,   // flagcxResult_t
-                                      // (*getDevicePciBusId)(char *pciBusId,
-                                      // int len, int dev);
+                                        // (*getDevicePciBusId)(char *pciBusId,
+                                        // int len, int dev);
       kunlunAdaptorGetDeviceByPciBusId, // flagcxResult_t
                                         // (*getDeviceByPciBusId)(int
                                         // *dev, const char *pciBusId);

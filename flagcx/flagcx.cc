@@ -470,8 +470,7 @@ flagcxResult_t flagcxCommInitRank(flagcxComm_t *comm, int nranks,
           (*comm)->homoInterMyRank, NULL));
     }
     free(nicDistanceData);
-    const char *deviceFuncPathEnv =
-        flagcxGetEnv("FLAGCX_DEVICE_FUNC_PATH");
+    const char *deviceFuncPathEnv = flagcxGetEnv("FLAGCX_DEVICE_FUNC_PATH");
     if (deviceFuncPathEnv) {
       if (loadAsyncKernelSymbol(deviceFuncPathEnv) != flagcxSuccess) {
         printf("Failed to load async kernel\n");
