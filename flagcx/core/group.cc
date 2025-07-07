@@ -48,6 +48,7 @@ struct flagcxPreconnectJob {
   struct flagcxHeteroComm *comm;
 };
 
+
 flagcxResult_t flagcxPreconnectFunc(struct flagcxAsyncJob *job_) {
   struct flagcxPreconnectJob *job = (struct flagcxPreconnectJob *)job_;
   struct flagcxHeteroComm *comm = job->comm;
@@ -243,3 +244,4 @@ exit:
 fail:
   goto exit;
 }
+

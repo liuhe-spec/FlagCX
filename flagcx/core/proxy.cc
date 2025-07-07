@@ -791,3 +791,4 @@ flagcxResult_t flagcxProxyDestroy(struct flagcxHeteroComm *comm) {
   }
   return flagcxSuccess;
 }
+

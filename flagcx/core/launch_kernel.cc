@@ -1,5 +1,6 @@
 #include "launch_kernel.h"
 #include "group.h"
+#include <dlfcn.h>
 #include <stdio.h>
 
 flagcxLaunchFunc_t deviceKernel = NULL;
@@ -18,7 +19,6 @@ flagcxResult_t loadAsyncKernelSymbol(const char *path, flagcxLaunchFunc_t *fn) {
     fprintf(stderr, "dlsym failed: %s\n", dlerror());
     return flagcxSystemError;
   }
-
   *fn = (flagcxLaunchFunc_t)sym;
   return flagcxSuccess;
 }

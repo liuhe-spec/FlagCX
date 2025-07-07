@@ -11,6 +11,7 @@
 #include "global_comm.h"
 #include "launch_kernel.h"
 #include "topo.h"
+#include "launch_kernel.h"
 
 #ifdef __cplusplus
 extern "C" {
