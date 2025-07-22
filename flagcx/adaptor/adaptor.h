@@ -11,7 +11,6 @@
 #include "global_comm.h"
 #include "launch_kernel.h"
 #include "topo.h"
-#include "launch_kernel.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -192,6 +191,9 @@ struct flagcxDeviceAdaptor {
   flagcxResult_t (*getHandleForAddressRange)(void *handleOut, void *buffer,
                                              size_t size,
                                              unsigned long long flags);
+  // GDR functions
+  flagcxResult_t (*gdrPtrMmap)(void **pcpuptr, void *devptr, size_t sz);
+  flagcxResult_t (*gdrPtrMummap)(void *cpuptr, size_t sz);
 };
 
 #ifdef __cplusplus
