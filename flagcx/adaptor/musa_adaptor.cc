@@ -316,7 +316,7 @@ struct flagcxDeviceAdaptor musaAdaptor {
                                       // (*getDeviceByPciBusId)(int
                                       // *dev, const char *pciBusId);
       musaAdaptorLaunchHostFunc,
-      //dmabuffer support
+      // dmabuffer support
       NULL, // flagcxResult_t (*dmaSupport)(bool *dmaBufferSupport);
       NULL, // flagcxResult_t (*memGetHandleForAddressRange)(void *handleOut,
             // void *buffer, size_t size, unsigned long long flags);
