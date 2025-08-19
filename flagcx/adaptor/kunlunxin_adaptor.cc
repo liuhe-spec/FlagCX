@@ -95,7 +95,7 @@ flagcxResult_t kunlunAdaptorGetDeviceCount(int *count) {
 }
 
 flagcxResult_t kunlunAdaptorGetVendor(char *vendor) {
-  strcpy(vendor, "NVIDIA");
+  strcpy(vendor, "KUNLUNXIN");
   return flagcxSuccess;
 }
 
@@ -287,7 +287,7 @@ flagcxResult_t kunlunAdaptorGdrPtrMmap(void **pcpuptr, void *devptr,
   if (pcpuptr == NULL || devptr == NULL || sz == 0) {
     return flagcxInvalidArgument;
   }
-  DEVCHECK(xccl_mmap(pcpuptr, devptr, sz));
+  DEVCHECK(baidu::xpu::bkcl::xccl_mmap(pcpuptr, devptr, sz));
   return flagcxSuccess;
 }
 
@@ -295,7 +295,7 @@ flagcxResult_t kunlunAdaptorGdrPtrMunmap(void *cpuptr, size_t sz) {
   if (cpuptr == NULL || sz == 0) {
     return flagcxInvalidArgument;
   }
-  DEVCHECK(xccl_munmap(cpuptr, sz));
+  DEVCHECK(baidu::xpu::bkcl::xccl_munmap(cpuptr, sz));
   return flagcxSuccess;
 }
 struct flagcxDeviceAdaptor kunlunAdaptor {
