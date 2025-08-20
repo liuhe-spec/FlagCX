@@ -383,6 +383,10 @@ struct flagcxDeviceAdaptor cudaAdaptor{
                                             // *handleOut, void *buffer,
                                             // size_t size, unsigned long long
                                             // flags);
+    // GDR functions
+    NULL, // flagcxResult_t (*gdrPtrMmap)(void **pcpuptr, void *devptr, size_t
+          // sz);
+    NULL, // flagcxResult_t (*gdrPtrMummap)(void *cpuptr, size_t sz)
 };
 
 #endif // USE_NVIDIA_ADAPTOR
