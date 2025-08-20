@@ -379,8 +379,8 @@ struct flagcxDeviceAdaptor cudaAdaptor{
                                     // *dev, const char *pciBusId);
     cudaAdaptorLaunchHostFunc,
     // DMA buffer
-    cudaAdaptorDmaSupport,                  // flagcxResult_t (*dmaSupport)(bool
-                                            // *dmaBufferSupport);
+    cudaAdaptorDmaSupport,  // flagcxResult_t (*dmaSupport)(bool
+                            // *dmaBufferSupport);
     cudaAdaptorMemGetHandleForAddressRange, // flagcxResult_t
                                             // (*memGetHandleForAddressRange)(void
                                             // *handleOut, void *buffer,
