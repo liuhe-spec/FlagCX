@@ -594,22 +594,10 @@ flagcxResult_t flagcxProxySend(sendNetResources *resources, void *data,
 
     if (args->posted < args->copied) {
       void *req = NULL;
-      if (deviceAdaptor->gdrPtrMmap && deviceAdaptor->gdrPtrMummap) {
-        void *cpuptr;
-        deviceAdaptor->gdrPtrMmap(&cpuptr,
-                                  args->subs[args->posted & stepMask].stepBuff,
-                                  args->subs[args->posted & stepMask].stepSize);
-        flagcxNetIb.isend(resources->netSendComm, cpuptr,
-                          args->subs[args->posted & stepMask].stepSize, 0,
-                          resources->mhandles[0], &req);
-        deviceAdaptor->gdrPtrMummap(
-            cpuptr, args->subs[args->posted & stepMask].stepSize);
-      } else {
-        flagcxNetIb.isend(resources->netSendComm,
-                          args->subs[args->posted & stepMask].stepBuff,
-                          args->subs[args->posted & stepMask].stepSize, 0,
-                          resources->mhandles[0], &req);
-      }
+      flagcxNetIb.isend(resources->netSendComm,
+                        args->subs[args->posted & stepMask].stepBuff,
+                        args->subs[args->posted & stepMask].stepSize, 0,
+                        resources->mhandles[0], &req);
       if (req) {
         args->subs[args->posted++ & stepMask].requests[0] = req;
       }
@@ -655,22 +643,10 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
           std::min(args->chunkSize, size - args->totalPostSize);
       args->subs[args->posted & stepMask].stepBuff =
           resources->buffers[0] + CHUNKSIZE * (args->posted & stepMask);
-      if (deviceAdaptor->gdrPtrMmap && deviceAdaptor->gdrPtrMummap) {
-        void *cpuptr;
-        deviceAdaptor->gdrPtrMmap(&cpuptr,
-                                  args->subs[args->posted & stepMask].stepBuff,
-                                  args->subs[args->posted & stepMask].stepSize);
-        flagcxNetIb.irecv(resources->netRecvComm, 1, &cpuptr,
-                          (int *)&args->subs[args->posted & stepMask].stepSize,
-                          tags, resources->mhandles, &req);
-        deviceAdaptor->gdrPtrMummap(
-            cpuptr, args->subs[args->posted & stepMask].stepSize);
-      } else {
-        flagcxNetIb.irecv(resources->netRecvComm, 1,
-                          &args->subs[args->posted & stepMask].stepBuff,
-                          (int *)&args->subs[args->posted & stepMask].stepSize,
-                          tags, resources->mhandles, &req);
-      }
+      flagcxNetIb.irecv(resources->netRecvComm, 1,
+                        &args->subs[args->posted & stepMask].stepBuff,
+                        (int *)&args->subs[args->posted & stepMask].stepSize,
+                        tags, resources->mhandles, &req);
       if (req) {
         args->subs[args->posted & stepMask].requests[0] = req;
         args->totalPostSize += args->subs[args->posted++ & stepMask].stepSize;
@@ -689,21 +665,9 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
     if (args->postFlush < args->transmitted) {
       void *req = NULL;
       void *allData[] = {args->subs[args->postFlush & stepMask].stepBuff};
-      if (deviceAdaptor->gdrPtrMmap && deviceAdaptor->gdrPtrMummap) {
-        void *cpuptr;
-        deviceAdaptor->gdrPtrMmap(
-            &cpuptr, args->subs[args->postFlush & stepMask].stepBuff,
-            args->subs[args->postFlush & stepMask].stepSize);
-        flagcxNetIb.iflush(resources->netRecvComm, 1, allData,
-                           &args->subs[args->postFlush & stepMask].stepSize,
-                           resources->mhandles, &req);
-        deviceAdaptor->gdrPtrMummap(
-            cpuptr, args->subs[args->postFlush & stepMask].stepSize);
-      } else {
-        flagcxNetIb.iflush(resources->netRecvComm, 1, allData,
-                           &args->subs[args->postFlush & stepMask].stepSize,
-                           resources->mhandles, &req);
-      }
+      flagcxNetIb.iflush(resources->netRecvComm, 1, allData,
+                         &args->subs[args->postFlush & stepMask].stepSize,
+                         resources->mhandles, &req);
       if (req) {
         args->subs[args->postFlush++ & stepMask].requests[0] = req;
       }
