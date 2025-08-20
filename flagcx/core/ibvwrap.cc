@@ -203,9 +203,19 @@ flagcxResult_t wrap_ibv_dealloc_pd(
 
 flagcxResult_t wrap_ibv_reg_mr(struct ibv_mr **ret, struct ibv_pd *pd,
                                void *addr, size_t length, int access) {
-  IBV_PTR_CHECK_ERRNO(ibvSymbols, ibv_internal_reg_mr,
-                      ibv_internal_reg_mr(pd, addr, length, access), *ret, NULL,
-                      "ibv_reg_mr");
+
+  if (deviceAdaptor->gdrPtrMmap && deviceAdaptor->gdrPtrMummap) {
+    void *cpuptr;
+    deviceAdaptor->gdrPtrMmap(&cpuptr, addr, length);
+    IBV_PTR_CHECK_ERRNO(ibvSymbols, ibv_internal_reg_mr,
+                        ibv_internal_reg_mr(pd, cpuptr, length, access), *ret,
+                        NULL, "ibv_reg_mr");
+    deviceAdaptor->gdrPtrMummap(cpuptr, length);
+  } else {
+    IBV_PTR_CHECK_ERRNO(ibvSymbols, ibv_internal_reg_mr,
+                        ibv_internal_reg_mr(pd, addr, length, access), *ret,
+                        NULL, "ibv_reg_mr");
+  }
 }
 
 struct ibv_mr *wrap_direct_ibv_reg_mr(struct ibv_pd *pd, void *addr,

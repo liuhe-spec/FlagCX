@@ -237,6 +237,10 @@ struct flagcxDeviceAdaptor cannAdaptor {
       NULL, // flagcxResult_t (*hostShareMemAlloc)(void **ptr, size_t size, void
             // *memHandle);
       NULL, // flagcxResult_t (*hostShareMemFree)(void *ptr, void *memHandle);
+            // GDR functions
+      NULL, // flagcxResult_t (*gdrPtrMmap)(void **pcpuptr, void *devptr, size_t
+            // sz);
+      NULL, // flagcxResult_t (*gdrPtrMummap)(void *cpuptr, size_t sz);
       // Stream functions
       cannAdaptorStreamCreate, cannAdaptorStreamDestroy, cannAdaptorStreamCopy,
       cannAdaptorStreamFree, cannAdaptorStreamSynchronize,
@@ -268,10 +272,6 @@ struct flagcxDeviceAdaptor cannAdaptor {
             // void *buffer, size_t size, unsigned long long flags);
                                       // (*getDeviceByPciBusId)(int
                                       // *dev, const char *pciBusId);
-      // GDR functions
-      NULL, // flagcxResult_t (*gdrPtrMmap)(void **pcpuptr, void *devptr, size_t
-            // sz);
-      NULL, // flagcxResult_t (*gdrPtrMummap)(void *cpuptr, size_t sz);
 };
 
 #endif // USE_ASCEND_ADAPTOR

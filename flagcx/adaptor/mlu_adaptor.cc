@@ -267,6 +267,9 @@ struct flagcxDeviceAdaptor mluAdaptor {
       NULL, // flagcxResult_t (*hostShareMemAlloc)(void **ptr, size_t size, void
             // *memHandle);
       NULL, // flagcxResult_t (*hostShareMemFree)(void *ptr, void *memHandle);
+      NULL, // flagcxResult_t (*gdrPtrMmap)(void **pcpuptr, void *devptr, size_t
+            // sz);
+      NULL, // flagcxResult_t (*gdrPtrMummap)(void *cpuptr, size_t sz);
       // Stream functions
       mluAdaptorStreamCreate, mluAdaptorStreamDestroy, mluAdaptorStreamCopy,
       mluAdaptorStreamFree, mluAdaptorStreamSynchronize, mluAdaptorStreamQuery,
@@ -297,10 +300,6 @@ struct flagcxDeviceAdaptor mluAdaptor {
       NULL, // flagcxResult_t (*dmaSupport)(bool *dmaBufferSupport);
       NULL, // flagcxResult_t (*memGetHandleForAddressRange)(void *handleOut,
             // void *buffer, size_t size, unsigned long long flags);
-      // GDR functions
-      NULL, // flagcxResult_t (*gdrPtrMmap)(void **pcpuptr, void *devptr, size_t
-            // sz);
-      NULL, // flagcxResult_t (*gdrPtrMummap)(void *cpuptr, size_t sz);
 };
 
 #endif // USE_CAMBRICON_ADAPTOR
