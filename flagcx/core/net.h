@@ -27,15 +27,16 @@ int flagcxNetVersion(struct flagcxHeteroComm *comm);
 flagcxResult_t flagcxGpuGdrSupport(struct flagcxHeteroComm *comm,
                                    int *gdrSupport);
 
-extern flagcxNet_t flagcxNetIb;
-extern flagcxNet_t flagcxNetSocket;
+// Network adaptor declarations
+extern struct flagcxNetAdaptor flagcxNetSocket;
+extern struct flagcxNetAdaptor flagcxNetIb;
 
 struct sendNetResources {
   void *netSendComm;
   struct flagcxSendMem *sendMem;
   struct flagcxRecvMem *recvMem;
 
-  flagcxNet_t *flagcxNet;
+  struct flagcxNetAdaptor *netAdaptor;
   flagcxCollNet_t *flagcxCollNet;
   int tpRank;
   int tpLocalRank;
@@ -67,7 +68,7 @@ struct recvNetResources {
   struct flagcxSendMem *sendMem;
   struct flagcxRecvMem *recvMem;
 
-  flagcxNet_t *flagcxNet;
+  struct flagcxNetAdaptor *netAdaptor;
   flagcxCollNet_t *flagcxCollNet;
   int tpRank;
   int tpLocalRank;

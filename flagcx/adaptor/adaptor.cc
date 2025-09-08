@@ -4,6 +4,9 @@
  ************************************************************************/
 
 #include "adaptor.h"
+#include <string.h>
+#include "core.h"
+#include "net.h"
 
 #ifdef USE_NVIDIA_ADAPTOR
 #ifdef USE_BOOTSTRAP_ADAPTOR
@@ -104,3 +107,20 @@ struct flagcxCCLAdaptor *cclAdaptors[NCCLADAPTORS] = {&mpiAdaptor,
 #endif
 struct flagcxDeviceAdaptor *deviceAdaptor = &ducudaAdaptor;
 #endif
+
+// External adaptor declarations
+extern struct flagcxNetAdaptor flagcxNetSocket;
+extern struct flagcxNetAdaptor flagcxNetIb;
+
+// Unified network adaptor entry point
+struct flagcxNetAdaptor *getUnifiedNetAdaptor(int netType) {
+    switch (netType) {
+        case 1:  // IB
+            return &flagcxNetIb;
+        case 2:  // Socket
+            return &flagcxNetSocket;
+        default:
+            return NULL;
+    }
+}
+

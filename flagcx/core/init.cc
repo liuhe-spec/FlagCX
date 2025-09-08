@@ -215,7 +215,7 @@ static flagcxResult_t flagcxCommInitRankFunc(struct flagcxAsyncJob *job_) {
     }
   }
   FLAGCXCHECK(flagcxNetInit(comm));
-  INFO(FLAGCX_INIT, "Using network %s", comm->flagcxNet->name);
+  INFO(FLAGCX_INIT, "Using network %s", comm->netAdaptor->name);
   if (env && strcmp(env, "TRUE") == 0) {
     INFO(FLAGCX_INIT, "getting busId for cudaDev %d", comm->cudaDev);
     FLAGCXCHECK(getBusId(comm->cudaDev, &comm->busId));
