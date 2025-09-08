@@ -10,10 +10,13 @@
 #include "net.h"
 #include "param.h"
 #include "socket.h"
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 ========
 #include "adaptor.h"
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
@@ -73,7 +76,6 @@ flagcxResult_t flagcxNetSocketInit() {
   }
   return flagcxSuccess;
 }
-
 
 flagcxResult_t flagcxNetSocketDevices(int *ndev) {
   *ndev = flagcxNetIfs;
@@ -337,6 +339,7 @@ flagcxResult_t flagcxNetSocketListen(int dev, void *opaqueHandle,
   return flagcxSuccess;
 }
 
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 flagcxResult_t flagcxNetSocketConnect(int dev, void *opaqueHandle,
                                       void **sendComm) {
@@ -344,6 +347,10 @@ flagcxResult_t flagcxNetSocketConnect(int dev, void *opaqueHandle,
 flagcxResult_t
 flagcxNetSocketConnect(int dev, void *opaqueHandle, void **sendComm) {
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+flagcxResult_t flagcxNetSocketConnect(int dev, void *opaqueHandle,
+                                      void **sendComm) {
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
   if (dev < 0 ||
       dev >= flagcxNetIfs) { // data transfer socket is based on specified dev
     return flagcxInternalError;
@@ -395,12 +402,16 @@ flagcxNetSocketConnect(int dev, void *opaqueHandle, void **sendComm) {
   return flagcxSuccess;
 }
 
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 flagcxResult_t flagcxNetSocketAccept(void *listenComm, void **recvComm) {
 ========
 flagcxResult_t
 flagcxNetSocketAccept(void *listenComm, void **recvComm) {
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+flagcxResult_t flagcxNetSocketAccept(void *listenComm, void **recvComm) {
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
   struct flagcxNetSocketListenComm *lComm =
       (struct flagcxNetSocketListenComm *)listenComm;
   struct flagcxNetSocketCommStage *stage = &lComm->stage;
@@ -609,7 +620,6 @@ flagcxResult_t flagcxNetSocketTest(void *request, int *done, int *size) {
   return flagcxSuccess;
 }
 
-
 flagcxResult_t flagcxNetSocketRegMr(void *comm, void *data, size_t size,
                                     int type, void **mhandle) {
   return (type != FLAGCX_PTR_HOST) ? flagcxInternalError : flagcxSuccess;
@@ -620,12 +630,17 @@ flagcxResult_t flagcxNetSocketDeregMr(void *comm, void *mhandle) {
 }
 
 flagcxResult_t flagcxNetSocketIsend(void *sendComm, void *data, size_t size,
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
                                     int tag, void *mhandle, void *phandle,
                                     void **request) {
 ========
                                     int tag, void *mhandle, void *phandle, void **request) {
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+                                    int tag, void *mhandle, void *phandle,
+                                    void **request) {
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)sendComm;
   FLAGCXCHECK(
       flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_SEND, data, (int)size,
@@ -639,9 +654,9 @@ flagcxResult_t flagcxNetSocketIrecv(void *recvComm, int n, void **data,
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)recvComm;
   if (n != 1)
     return flagcxInternalError;
-  FLAGCXCHECK(
-      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_RECV, data[0], (int)sizes[0],
-                                (struct flagcxNetSocketRequest **)request));
+  FLAGCXCHECK(flagcxNetSocketGetRequest(
+      comm, FLAGCX_SOCKET_RECV, data[0], (int)sizes[0],
+      (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
 
@@ -695,6 +710,7 @@ flagcxResult_t flagcxNetSocketClose(void *opaqueComm) {
 
 flagcxNetAdaptor flagcxNetSocket = {
     // Basic functions
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
     "Socket", flagcxNetSocketInit, flagcxNetSocketDevices,
 ========
@@ -702,10 +718,14 @@ flagcxNetAdaptor flagcxNetSocket = {
     flagcxNetSocketInit,
     flagcxNetSocketDevices,
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+    "Socket", flagcxNetSocketInit, flagcxNetSocketDevices,
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
     flagcxNetSocketGetProperties,
     NULL, // reduceSupport - not implemented
     NULL, // getDeviceMr - not implemented
     NULL, // irecvConsumed - not implemented
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 
     // Setup functions
@@ -716,19 +736,25 @@ flagcxNetAdaptor flagcxNetSocket = {
 
 ========
     
+=======
+
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
     // Setup functions
-    flagcxNetSocketListen,
-    flagcxNetSocketConnect,
-    flagcxNetSocketAccept,
+    flagcxNetSocketListen, flagcxNetSocketConnect, flagcxNetSocketAccept,
     flagcxNetSocketClose, // closeSend
     flagcxNetSocketClose, // closeRecv (same as closeSend for socket)
     flagcxNetSocketCloseListen,
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
     
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
     // Memory region functions
     flagcxNetSocketRegMr,
     NULL, // regMrDmaBuf - No DMA-BUF support
     flagcxNetSocketDeregMr,
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 
     // Two-sided functions
@@ -737,22 +763,31 @@ flagcxNetAdaptor flagcxNetSocket = {
 
 ========
     
+=======
+
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
     // Two-sided functions
-    flagcxNetSocketIsend,
-    flagcxNetSocketIrecv,
-    flagcxNetSocketIflush,
+    flagcxNetSocketIsend, flagcxNetSocketIrecv, flagcxNetSocketIflush,
     flagcxNetSocketTest,
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
     
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
     // One-sided functions
     NULL, // write - not implemented
     NULL, // read - not implemented
     NULL, // signal - not implemented
+<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 <<<<<<<< HEAD:flagcx/adaptor/net/socket_adaptor.cc
 
 ========
     
 >>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/socket_adaptor.cc
+=======
+
+>>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
     // Device name lookup
     NULL, // getDevFromName
 };
