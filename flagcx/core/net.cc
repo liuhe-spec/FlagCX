@@ -361,7 +361,8 @@ static flagcxResult_t flagcxCollNet_v7_as_v8_init(flagcxDebugLogger_t logfn) {
 
 static pthread_mutex_t netLock = PTHREAD_MUTEX_INITIALIZER;
 // Use adaptor system for all network types
-struct flagcxNetAdaptor *flagcxNetAdaptors[3] = {nullptr, getUnifiedNetAdaptor(1), getUnifiedNetAdaptor(2)};
+struct flagcxNetAdaptor *flagcxNetAdaptors[3] = {
+    nullptr, getUnifiedNetAdaptor(1), getUnifiedNetAdaptor(2)};
 flagcxNet_t *flagcxNets[3] = {nullptr, nullptr, nullptr};
 flagcxCollNet_t *flagcxCollNets[3] = {nullptr, nullptr, nullptr};
 enum flagcxNetState {
@@ -559,7 +560,8 @@ flagcxResult_t flagcxNetPluginInit() {
 }
 
 flagcxResult_t flagcxNetCheckDeviceVersion(struct flagcxHeteroComm *comm,
-                                           struct flagcxNetAdaptor *net, int dev) {
+                                           struct flagcxNetAdaptor *net,
+                                           int dev) {
   flagcxNetProperties_v8_t props;
 
   FLAGCXCHECK(net->getProperties(dev, (void *)&props));
@@ -596,7 +598,8 @@ static flagcxResult_t netGetState(int i, enum flagcxNetState *state) {
       flagcxNetStates[i] = flagcxNetStateDisabled;
     } else if (flagcxNetAdaptors[i]->init() != flagcxSuccess) {
       flagcxNetStates[i] = flagcxNetStateDisabled;
-    } else if (flagcxNetAdaptors[i]->devices(&ndev) != flagcxSuccess || ndev <= 0) {
+    } else if (flagcxNetAdaptors[i]->devices(&ndev) != flagcxSuccess ||
+               ndev <= 0) {
       flagcxNetStates[i] = flagcxNetStateDisabled;
     } else {
       flagcxNetStates[i] = flagcxNetStateEnabled;
@@ -739,9 +742,9 @@ flagcxResult_t flagcxProxySend(sendNetResources *resources, void *data,
     if (args->posted < args->copied) {
       void *req = NULL;
       resources->netAdaptor->isend(resources->netSendComm,
-                                  args->subs[args->posted & stepMask].stepBuff,
-                                  args->subs[args->posted & stepMask].stepSize,
-                                  0, resources->mhandles[0], NULL, &req);
+                                   args->subs[args->posted & stepMask].stepBuff,
+                                   args->subs[args->posted & stepMask].stepSize,
+                                   0, resources->mhandles[0], NULL, &req);
       if (req) {
         args->subs[args->posted++ & stepMask].requests[0] = req;
       }
@@ -788,8 +791,7 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
       size_t stepSize = args->subs[args->posted & stepMask].stepSize;
       resources->netAdaptor->irecv(
           resources->netRecvComm, 1,
-          &args->subs[args->posted & stepMask].stepBuff,
-          &stepSize, tags,
+          &args->subs[args->posted & stepMask].stepBuff, &stepSize, tags,
           resources->mhandles, NULL, &req);
       if (req) {
         args->subs[args->posted & stepMask].requests[0] = req;
@@ -825,7 +827,8 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
     if (args->flushed < args->postFlush) {
       void *req = args->subs[args->flushed & stepMask].requests[0];
       int done = 0, sizes;
-      if (resources->netAdaptor == getUnifiedNetAdaptor(2) && req == (void *)0x1) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(2) &&
+          req == (void *)0x1) {
         done = 1;
         sizes = 0;
       } else {
@@ -884,7 +887,8 @@ flagcxResult_t flagcxSendProxyFree(sendNetResources *resources) {
     FLAGCXCHECK(deviceAdaptor->eventDestroy(resources->cpEvents[s]));
   }
   FLAGCXCHECK(deviceAdaptor->streamDestroy(resources->cpStream));
-  resources->netAdaptor->deregMr(resources->netSendComm, resources->mhandles[0]);
+  resources->netAdaptor->deregMr(resources->netSendComm,
+                                 resources->mhandles[0]);
   resources->netAdaptor->closeSend(resources->netSendComm);
   FLAGCXCHECK(deviceAdaptor->gdrMemFree(resources->buffers[0], NULL));
   return flagcxSuccess;
@@ -895,7 +899,8 @@ flagcxResult_t flagcxRecvProxyFree(recvNetResources *resources) {
     FLAGCXCHECK(deviceAdaptor->eventDestroy(resources->cpEvents[s]));
   }
   FLAGCXCHECK(deviceAdaptor->streamDestroy(resources->cpStream));
-  resources->netAdaptor->deregMr(resources->netRecvComm, resources->mhandles[0]);
+  resources->netAdaptor->deregMr(resources->netRecvComm,
+                                 resources->mhandles[0]);
   resources->netAdaptor->closeRecv(resources->netRecvComm);
   resources->netAdaptor->closeListen(resources->netListenComm);
   FLAGCXCHECK(deviceAdaptor->gdrMemFree(resources->buffers[0], NULL));

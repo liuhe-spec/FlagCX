@@ -539,8 +539,8 @@ static flagcxResult_t proxyProgressAsync(flagcxProxyAsyncOp **opHead,
       struct recvNetResources *resources =
           (struct recvNetResources *)op->connection->transportResources;
       if (!resources->netRecvComm) {
-        FLAGCXCHECK(resources->netAdaptor->accept(
-            resources->netListenComm, &resources->netRecvComm));
+        FLAGCXCHECK(resources->netAdaptor->accept(resources->netListenComm,
+                                                  &resources->netRecvComm));
       } else {
         bool dmaBufferSupport = false;
         if (deviceAdaptor->dmaSupport != NULL) {

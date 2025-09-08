@@ -2071,7 +2071,8 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
 }
 
 flagcxResult_t flagcxIbIrecv(void *recvComm, int n, void **data, size_t *sizes,
-                             int *tags, void **mhandles, void **phandles, void **request) {
+                             int *tags, void **mhandles, void **phandles,
+                             void **request) {
   struct flagcxIbRecvComm *comm = (struct flagcxIbRecvComm *)recvComm;
   if (comm->base.ready == 0) {
     WARN("NET/IB: flagcxIbIrecv() called when comm->base.ready == 0");
@@ -2351,7 +2352,7 @@ flagcxResult_t flagcxIbGetDevFromName(char *name, int *dev) {
 flagcxResult_t flagcxIbGetProperties(int dev, void *props) {
   struct flagcxIbMergedDev *mergedDev = flagcxIbMergedDevs + dev;
   flagcxNetProperties_t *properties = (flagcxNetProperties_t *)props;
-  
+
   properties->name = mergedDev->devName;
   properties->speed = mergedDev->speed;
 
@@ -2382,38 +2383,25 @@ flagcxResult_t flagcxIbGetProperties(int dev, void *props) {
 
 struct flagcxNetAdaptor flagcxNetIb = {
     // Basic functions
-    "IB",
-    flagcxIbInit,
-    flagcxIbDevices,
-    flagcxIbGetProperties,
+    "IB", flagcxIbInit, flagcxIbDevices, flagcxIbGetProperties,
     NULL, // reduceSupport
     NULL, // getDeviceMr
     NULL, // irecvConsumed
-    
+
     // Setup functions
-    flagcxIbListen,
-    flagcxIbConnect,
-    flagcxIbAccept,
-    flagcxIbCloseSend,
-    flagcxIbCloseRecv,
-    flagcxIbCloseListen,
-    
+    flagcxIbListen, flagcxIbConnect, flagcxIbAccept, flagcxIbCloseSend,
+    flagcxIbCloseRecv, flagcxIbCloseListen,
+
     // Memory region functions
-    flagcxIbRegMr,
-    flagcxIbRegMrDmaBuf,
-    flagcxIbDeregMr,
-    
+    flagcxIbRegMr, flagcxIbRegMrDmaBuf, flagcxIbDeregMr,
+
     // Two-sided functions
-    flagcxIbIsend,
-    flagcxIbIrecv,
-    flagcxIbIflush,
-    flagcxIbTest,
-    
+    flagcxIbIsend, flagcxIbIrecv, flagcxIbIflush, flagcxIbTest,
+
     // One-sided functions
     NULL, // write
     NULL, // read
     NULL, // signal
-    
+
     // Device name lookup
-    flagcxIbGetDevFromName
-};
+    flagcxIbGetDevFromName};

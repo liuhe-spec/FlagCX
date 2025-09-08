@@ -4,12 +4,12 @@
  * See LICENSE.txt for license information
  ************************************************************************/
 
+#include "adaptor.h"
 #include "comm.h"
 #include "core.h"
 #include "net.h"
 #include "param.h"
 #include "socket.h"
-#include "adaptor.h"
 #include <fcntl.h>
 #include <limits.h>
 #include <poll.h>
@@ -69,7 +69,6 @@ flagcxResult_t flagcxNetSocketInit() {
   }
   return flagcxSuccess;
 }
-
 
 flagcxResult_t flagcxNetSocketDevices(int *ndev) {
   *ndev = flagcxNetIfs;
@@ -333,8 +332,8 @@ flagcxResult_t flagcxNetSocketListen(int dev, void *opaqueHandle,
   return flagcxSuccess;
 }
 
-flagcxResult_t
-flagcxNetSocketConnect(int dev, void *opaqueHandle, void **sendComm) {
+flagcxResult_t flagcxNetSocketConnect(int dev, void *opaqueHandle,
+                                      void **sendComm) {
   if (dev < 0 ||
       dev >= flagcxNetIfs) { // data transfer socket is based on specified dev
     return flagcxInternalError;
@@ -386,8 +385,7 @@ flagcxNetSocketConnect(int dev, void *opaqueHandle, void **sendComm) {
   return flagcxSuccess;
 }
 
-flagcxResult_t
-flagcxNetSocketAccept(void *listenComm, void **recvComm) {
+flagcxResult_t flagcxNetSocketAccept(void *listenComm, void **recvComm) {
   struct flagcxNetSocketListenComm *lComm =
       (struct flagcxNetSocketListenComm *)listenComm;
   struct flagcxNetSocketCommStage *stage = &lComm->stage;
@@ -596,7 +594,6 @@ flagcxResult_t flagcxNetSocketTest(void *request, int *done, int *size) {
   return flagcxSuccess;
 }
 
-
 flagcxResult_t flagcxNetSocketRegMr(void *comm, void *data, size_t size,
                                     int type, void **mhandle) {
   return (type != FLAGCX_PTR_HOST) ? flagcxInternalError : flagcxSuccess;
@@ -607,7 +604,8 @@ flagcxResult_t flagcxNetSocketDeregMr(void *comm, void *mhandle) {
 }
 
 flagcxResult_t flagcxNetSocketIsend(void *sendComm, void *data, size_t size,
-                                    int tag, void *mhandle, void *phandle, void **request) {
+                                    int tag, void *mhandle, void *phandle,
+                                    void **request) {
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)sendComm;
   FLAGCXCHECK(
       flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_SEND, data, (int)size,
@@ -621,9 +619,9 @@ flagcxResult_t flagcxNetSocketIrecv(void *recvComm, int n, void **data,
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)recvComm;
   if (n != 1)
     return flagcxInternalError;
-  FLAGCXCHECK(
-      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_RECV, data[0], (int)sizes[0],
-                                (struct flagcxNetSocketRequest **)request));
+  FLAGCXCHECK(flagcxNetSocketGetRequest(
+      comm, FLAGCX_SOCKET_RECV, data[0], (int)sizes[0],
+      (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
 
@@ -677,38 +675,32 @@ flagcxResult_t flagcxNetSocketClose(void *opaqueComm) {
 
 flagcxNetAdaptor flagcxNetSocket = {
     // Basic functions
-    "Socket",
-    flagcxNetSocketInit,
-    flagcxNetSocketDevices,
+    "Socket", flagcxNetSocketInit, flagcxNetSocketDevices,
     flagcxNetSocketGetProperties,
     NULL, // reduceSupport - not implemented
     NULL, // getDeviceMr - not implemented
     NULL, // irecvConsumed - not implemented
-    
+
     // Setup functions
-    flagcxNetSocketListen,
-    flagcxNetSocketConnect,
-    flagcxNetSocketAccept,
+    flagcxNetSocketListen, flagcxNetSocketConnect, flagcxNetSocketAccept,
     flagcxNetSocketClose, // closeSend
     flagcxNetSocketClose, // closeRecv (same as closeSend for socket)
     flagcxNetSocketCloseListen,
-    
+
     // Memory region functions
     flagcxNetSocketRegMr,
     NULL, // regMrDmaBuf - No DMA-BUF support
     flagcxNetSocketDeregMr,
-    
+
     // Two-sided functions
-    flagcxNetSocketIsend,
-    flagcxNetSocketIrecv,
-    flagcxNetSocketIflush,
+    flagcxNetSocketIsend, flagcxNetSocketIrecv, flagcxNetSocketIflush,
     flagcxNetSocketTest,
-    
+
     // One-sided functions
     NULL, // write - not implemented
     NULL, // read - not implemented
     NULL, // signal - not implemented
-    
+
     // Device name lookup
     NULL, // getDevFromName
 };

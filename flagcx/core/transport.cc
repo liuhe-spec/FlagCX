@@ -28,7 +28,7 @@ flagcxResult_t flagcxTransportP2pSetup(struct flagcxHeteroComm *comm,
         resources->netDev = comm->netDev;
         resources->netAdaptor = comm->netAdaptor;
         comm->netAdaptor->listen(resources->netDev, (void *)handle,
-                                &resources->netListenComm);
+                                 &resources->netListenComm);
         bootstrapSend(comm->bootstrap, peer, 1001 + c, handle,
                       sizeof(flagcxIbHandle));
         deviceAdaptor->streamCreate(&resources->cpStream);
