@@ -1991,7 +1991,7 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
   int slot = comm->remFifo.fifoTail % MAX_REQUESTS;
   req->recv.sizes = comm->sizesFifo[slot];
   for (int i = 0; i < n; i++)
-    req->recv.sizes[i] = (int)sizes[i];
+    req->recv.sizes[i] = sizes[i];
   struct flagcxIbSendFifo *localElem = comm->remFifo.elems[slot];
 
   // Select the next devIndex (local) and QP to use for posting this CTS message

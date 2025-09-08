@@ -643,7 +643,7 @@ flagcxResult_t flagcxNetSocketIsend(void *sendComm, void *data, size_t size,
 >>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/socket_adaptor.cc
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)sendComm;
   FLAGCXCHECK(
-      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_SEND, data, (int)size,
+      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_SEND, data, size,
                                 (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
@@ -655,7 +655,7 @@ flagcxResult_t flagcxNetSocketIrecv(void *recvComm, int n, void **data,
   if (n != 1)
     return flagcxInternalError;
   FLAGCXCHECK(flagcxNetSocketGetRequest(
-      comm, FLAGCX_SOCKET_RECV, data[0], (int)sizes[0],
+      comm, FLAGCX_SOCKET_RECV, data[0], sizes[0],
       (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
