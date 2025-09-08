@@ -113,11 +113,15 @@ extern struct flagcxNetAdaptor flagcxNetSocket;
 extern struct flagcxNetAdaptor flagcxNetIb;
 
 // Unified network adaptor entry point
+enum NetType {
+  IB = 1,    // IB
+  SOCKET = 2 // Socket
+};
 struct flagcxNetAdaptor *getUnifiedNetAdaptor(int netType) {
   switch (netType) {
-    case 1: // IB
+    case IB:
       return &flagcxNetIb;
-    case 2: // Socket
+    case SOCKET:
       return &flagcxNetSocket;
     default:
       return NULL;

@@ -445,7 +445,7 @@ flagcxResult_t flagcxNetSocketAccept(void *listenComm, void **recvComm) {
 }
 
 flagcxResult_t flagcxNetSocketGetRequest(struct flagcxNetSocketComm *comm,
-                                         int op, void *data, int size,
+                                         int op, void *data, size_t size,
                                          struct flagcxNetSocketRequest **req) {
   for (int i = 0; i < MAX_REQUESTS; i++) {
     struct flagcxNetSocketRequest *r = comm->requests + i;
@@ -608,7 +608,7 @@ flagcxResult_t flagcxNetSocketIsend(void *sendComm, void *data, size_t size,
                                     void **request) {
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)sendComm;
   FLAGCXCHECK(
-      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_SEND, data, (int)size,
+      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_SEND, data, size,
                                 (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
@@ -620,7 +620,7 @@ flagcxResult_t flagcxNetSocketIrecv(void *recvComm, int n, void **data,
   if (n != 1)
     return flagcxInternalError;
   FLAGCXCHECK(flagcxNetSocketGetRequest(
-      comm, FLAGCX_SOCKET_RECV, data[0], (int)sizes[0],
+      comm, FLAGCX_SOCKET_RECV, data[0], sizes[0],
       (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
