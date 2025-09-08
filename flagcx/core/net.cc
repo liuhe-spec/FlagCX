@@ -362,7 +362,7 @@ static flagcxResult_t flagcxCollNet_v7_as_v8_init(flagcxDebugLogger_t logfn) {
 static pthread_mutex_t netLock = PTHREAD_MUTEX_INITIALIZER;
 // Use adaptor system for all network types
 struct flagcxNetAdaptor *flagcxNetAdaptors[3] = {
-    nullptr, getUnifiedNetAdaptor(1), getUnifiedNetAdaptor(2)};
+    nullptr, getUnifiedNetAdaptor(IB), getUnifiedNetAdaptor(SOCKET)};
 flagcxNet_t *flagcxNets[3] = {nullptr, nullptr, nullptr};
 flagcxCollNet_t *flagcxCollNets[3] = {nullptr, nullptr, nullptr};
 enum flagcxNetState {
@@ -641,7 +641,7 @@ flagcxResult_t flagcxNetInit(struct flagcxHeteroComm *comm) {
     for (int i = 2; i >= 0; i--) {
       if (flagcxNetAdaptors[i] == nullptr)
         continue;
-      if (flagcxNetAdaptors[i] != getUnifiedNetAdaptor(2))
+      if (flagcxNetAdaptors[i] != getUnifiedNetAdaptor(SOCKET))
         continue;
       enum flagcxNetState state;
       FLAGCXCHECK(netGetState(i, &state));
@@ -714,12 +714,12 @@ flagcxResult_t flagcxProxySend(sendNetResources *resources, void *data,
       args->subs[step].stepSize =
           std::min(args->chunkSize, size - args->totalCopySize);
       args->subs[step].stepBuff = resources->buffers[0] + (CHUNKSIZE * step);
-      if (resources->netAdaptor == getUnifiedNetAdaptor(1)) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(IB)) {
         FLAGCXCHECK(deviceAdaptor->deviceMemcpy(
             args->subs[step].stepBuff, (char *)data + args->totalCopySize,
             args->subs[step].stepSize, flagcxMemcpyDeviceToDevice,
             resources->cpStream, args->subs[step].copyArgs));
-      } else if (resources->netAdaptor == getUnifiedNetAdaptor(2)) {
+      } else if (resources->netAdaptor == getUnifiedNetAdaptor(SOCKET)) {
         FLAGCXCHECK(deviceAdaptor->deviceMemcpy(
             args->subs[step].stepBuff, (char *)data + args->totalCopySize,
             args->subs[step].stepSize, flagcxMemcpyDeviceToHost,
@@ -809,7 +809,7 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
     }
 
     if (args->postFlush < args->transmitted) {
-      if (resources->netAdaptor == getUnifiedNetAdaptor(1)) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(IB)) {
         void *req = NULL;
         void *allData[] = {args->subs[args->postFlush & stepMask].stepBuff};
         resources->netAdaptor->iflush(
@@ -819,7 +819,7 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
         if (req) {
           args->subs[args->postFlush++ & stepMask].requests[0] = req;
         };
-      } else if (resources->netAdaptor == getUnifiedNetAdaptor(2)) {
+      } else if (resources->netAdaptor == getUnifiedNetAdaptor(SOCKET)) {
         args->subs[args->postFlush & stepMask].requests[0] = (void *)0x1;
         args->postFlush++;
       }
@@ -827,7 +827,7 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
     if (args->flushed < args->postFlush) {
       void *req = args->subs[args->flushed & stepMask].requests[0];
       int done = 0, sizes;
-      if (resources->netAdaptor == getUnifiedNetAdaptor(2) &&
+      if (resources->netAdaptor == getUnifiedNetAdaptor(SOCKET) &&
           req == (void *)0x1) {
         done = 1;
         sizes = 0;
@@ -841,12 +841,12 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
 
     if (args->waitCopy < args->flushed) {
       int step = args->waitCopy & stepMask;
-      if (resources->netAdaptor == getUnifiedNetAdaptor(1)) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(IB)) {
         FLAGCXCHECK(deviceAdaptor->deviceMemcpy(
             (char *)data + args->totalCopySize, args->subs[step].stepBuff,
             args->subs[step].stepSize, flagcxMemcpyDeviceToDevice,
             resources->cpStream, args->subs[step].copyArgs));
-      } else if (resources->netAdaptor == getUnifiedNetAdaptor(2)) {
+      } else if (resources->netAdaptor == getUnifiedNetAdaptor(SOCKET)) {
         FLAGCXCHECK(deviceAdaptor->deviceMemcpy(
             (char *)data + args->totalCopySize, args->subs[step].stepBuff,
             args->subs[step].stepSize, flagcxMemcpyHostToDevice,

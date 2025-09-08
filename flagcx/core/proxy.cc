@@ -523,11 +523,11 @@ static flagcxResult_t proxyProgressAsync(flagcxProxyAsyncOp **opHead,
               resources->buffSizes[0], 2, 0ULL, dmabuf_fd,
               &resources->mhandles[0]));
         } else {
-          if (resources->netAdaptor == getUnifiedNetAdaptor(1)) {
+          if (resources->netAdaptor == getUnifiedNetAdaptor(IB)) {
             FLAGCXCHECK(resources->netAdaptor->regMr(
                 resources->netSendComm, resources->buffers[0],
                 resources->buffSizes[0], 2, &resources->mhandles[0]));
-          } else if (resources->netAdaptor == getUnifiedNetAdaptor(2)) {
+          } else if (resources->netAdaptor == getUnifiedNetAdaptor(SOCKET)) {
             FLAGCXCHECK(resources->netAdaptor->regMr(
                 resources->netSendComm, resources->buffers[0],
                 resources->buffSizes[0], 1, &resources->mhandles[0]));
@@ -557,11 +557,11 @@ static flagcxResult_t proxyProgressAsync(flagcxProxyAsyncOp **opHead,
               resources->buffSizes[0], 2, 0ULL, dmabuf_fd,
               &resources->mhandles[0]));
         } else {
-          if (resources->netAdaptor == getUnifiedNetAdaptor(1)) {
+          if (resources->netAdaptor == getUnifiedNetAdaptor(IB)) {
             FLAGCXCHECK(resources->netAdaptor->regMr(
                 resources->netRecvComm, resources->buffers[0],
                 resources->buffSizes[0], 2, &resources->mhandles[0]));
-          } else if (resources->netAdaptor == getUnifiedNetAdaptor(2)) {
+          } else if (resources->netAdaptor == getUnifiedNetAdaptor(SOCKET)) {
             FLAGCXCHECK(resources->netAdaptor->regMr(
                 resources->netRecvComm, resources->buffers[0],
                 resources->buffSizes[0], 1, &resources->mhandles[0]));

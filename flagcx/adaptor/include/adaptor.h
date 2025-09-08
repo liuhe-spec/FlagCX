@@ -45,6 +45,12 @@ extern struct flagcxDeviceAdaptor *deviceAdaptor;
 
 extern struct flagcxNetAdaptor *netAdaptor;
 
+// Network type enumeration
+enum NetType {
+  IB = 1,    // InfiniBand
+  SOCKET = 2 // Socket
+};
+
 // Unified network adaptor function declarations
 struct flagcxNetAdaptor *getUnifiedNetAdaptor(int netType);
 
