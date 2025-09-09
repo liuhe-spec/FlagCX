@@ -619,9 +619,9 @@ flagcxResult_t flagcxNetSocketIrecv(void *recvComm, int n, void **data,
   struct flagcxNetSocketComm *comm = (struct flagcxNetSocketComm *)recvComm;
   if (n != 1)
     return flagcxInternalError;
-  FLAGCXCHECK(flagcxNetSocketGetRequest(
-      comm, FLAGCX_SOCKET_RECV, data[0], sizes[0],
-      (struct flagcxNetSocketRequest **)request));
+  FLAGCXCHECK(
+      flagcxNetSocketGetRequest(comm, FLAGCX_SOCKET_RECV, data[0], sizes[0],
+                                (struct flagcxNetSocketRequest **)request));
   return flagcxSuccess;
 }
 

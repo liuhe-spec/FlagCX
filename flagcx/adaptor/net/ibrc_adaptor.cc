@@ -176,11 +176,11 @@ static void *envIbAddrRange(sa_family_t af, int *mask) {
 
 static sa_family_t getGidAddrFamily(union ibv_gid *gid) {
   const struct in6_addr *a = (struct in6_addr *)gid->raw;
-  bool isIpV4Mapped = ((a->s6_addr[0] | a->s6_addr[1]) |
-                       (a->s6_addr[2] ^ htonl(0x0000ffff))) == 0UL;
+  bool isIpV4Mapped = ((a->s6_addr32[0] | a->s6_addr32[1]) |
+                       (a->s6_addr32[2] ^ htonl(0x0000ffff))) == 0UL;
   bool isIpV4MappedMulticast =
-      (a->s6_addr[0] == htonl(0xff0e0000) &&
-       ((a->s6_addr[1] | (a->s6_addr[2] ^ htonl(0x0000ffff))) == 0UL));
+      (a->s6_addr32[0] == htonl(0xff0e0000) &&
+       ((a->s6_addr32[1] | (a->s6_addr32[2] ^ htonl(0x0000ffff))) == 0UL));
   return (isIpV4Mapped || isIpV4MappedMulticast) ? AF_INET : AF_INET6;
 }
 
@@ -203,21 +203,21 @@ static bool matchGidAddrPrefix(sa_family_t af, void *prefix, int prefixlen,
   while (prefixlen > 0 && i < 4) {
     if (af == AF_INET) {
       int mask = NETMASK(prefixlen);
-      if ((base->s_addr & mask) ^ (addr6->s6_addr[3] & mask)) {
+      if ((base->s_addr & mask) ^ (addr6->s6_addr32[3] & mask)) {
         break;
       }
       prefixlen = 0;
       break;
     } else {
       if (prefixlen >= 32) {
-        if (base6->s6_addr[i] ^ addr6->s6_addr[i]) {
+        if (base6->s6_addr32[i] ^ addr6->s6_addr32[i]) {
           break;
         }
         prefixlen -= 32;
         ++i;
       } else {
         int mask = NETMASK(prefixlen);
-        if ((base6->s6_addr[i] & mask) ^ (addr6->s6_addr[i] & mask)) {
+        if ((base6->s6_addr32[i] & mask) ^ (addr6->s6_addr32[i] & mask)) {
           break;
         }
         prefixlen = 0;
@@ -230,9 +230,9 @@ static bool matchGidAddrPrefix(sa_family_t af, void *prefix, int prefixlen,
 
 static bool configuredGid(union ibv_gid *gid) {
   const struct in6_addr *a = (struct in6_addr *)gid->raw;
-  int trailer = (a->s6_addr[1] | a->s6_addr[2] | a->s6_addr[3]);
-  if (((a->s6_addr[0] | trailer) == 0UL) ||
-      ((a->s6_addr[0] == htonl(0xfe800000)) && (trailer == 0UL))) {
+  int trailer = (a->s6_addr32[1] | a->s6_addr32[2] | a->s6_addr32[3]);
+  if (((a->s6_addr32[0] | trailer) == 0UL) ||
+      ((a->s6_addr32[0] == htonl(0xfe800000)) && (trailer == 0UL))) {
     return false;
   }
   return true;
@@ -240,7 +240,7 @@ static bool configuredGid(union ibv_gid *gid) {
 
 static bool linkLocalGid(union ibv_gid *gid) {
   const struct in6_addr *a = (struct in6_addr *)gid->raw;
-  if (a->s6_addr[0] == htonl(0xfe800000) && a->s6_addr[1] == 0UL) {
+  if (a->s6_addr32[0] == htonl(0xfe800000) && a->s6_addr32[1] == 0UL) {
     return true;
   }
   return false;
