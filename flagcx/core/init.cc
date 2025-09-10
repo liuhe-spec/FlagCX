@@ -298,7 +298,6 @@ fail:
 flagcxResult_t flagcxHeteroCommInitRank(flagcxHeteroComm_t *newcomm, int nranks,
                                         flagcxUniqueId commId, int myrank) {
   FLAGCXCHECK(flagcxInit());
-  FLAGCXCHECK(flagcxNetPluginInit());
   int cudaDev = 0;
   flagcxConfig_t config;
   // flagcxGetDevice(&cudaDev);
