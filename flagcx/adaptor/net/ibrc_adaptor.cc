@@ -801,7 +801,7 @@ struct flagcxIbListenComm {
 
 struct flagcxIbSendFifo {
   uint64_t addr;
-  int size;
+  size_t size;
   uint32_t rkeys[FLAGCX_IB_MAX_DEVS_PER_NIC];
   uint32_t nreqs;
   uint32_t tag;
@@ -1991,7 +1991,7 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
   int slot = comm->remFifo.fifoTail % MAX_REQUESTS;
   req->recv.sizes = comm->sizesFifo[slot];
   for (int i = 0; i < n; i++)
-    req->recv.sizes[i] = sizes[i];
+    req->recv.sizes[i] = 0;
   struct flagcxIbSendFifo *localElem = comm->remFifo.elems[slot];
 
   // Select the next devIndex (local) and QP to use for posting this CTS message
@@ -2008,9 +2008,8 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
     // Send all applicable rkeys
     for (int j = 0; j < comm->base.ndevs; j++)
       localElem[i].rkeys[j] = mhandleWrapper->mrs[j]->rkey;
-
     localElem[i].nreqs = n;
-    localElem[i].size = (int)sizes[i]; // Sanity/Debugging
+    localElem[i].size = sizes[i];
     localElem[i].tag = tags[i];
     localElem[i].idx = comm->remFifo.fifoTail + 1;
   }
