@@ -1920,7 +1920,7 @@ flagcxResult_t flagcxIbIsend(void *sendComm, void *data, size_t size, int tag,
       union flagcxSocketAddress addr;
       flagcxSocketGetAddr(&comm->base.sock, &addr);
       WARN("NET/IB : req %d/%d tag %x peer %s posted incorrect receive info: "
-           "size %d addr %lx rkeys[0]=%x",
+           "size %zu addr %lx rkeys[0]=%x",
            r, nreqs, tag, flagcxSocketToString(&addr, line), slots[r].size,
            slots[r].addr, slots[r].rkeys[0]);
       return flagcxInternalError;
@@ -1991,7 +1991,7 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
   int slot = comm->remFifo.fifoTail % MAX_REQUESTS;
   req->recv.sizes = comm->sizesFifo[slot];
   for (int i = 0; i < n; i++)
-    req->recv.sizes[i] = sizes[i];
+    req->recv.sizes[i] = 0;
   struct flagcxIbSendFifo *localElem = comm->remFifo.elems[slot];
 
   // Select the next devIndex (local) and QP to use for posting this CTS message
@@ -2009,11 +2009,7 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
     for (int j = 0; j < comm->base.ndevs; j++)
       localElem[i].rkeys[j] = mhandleWrapper->mrs[j]->rkey;
     localElem[i].nreqs = n;
-<<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
     localElem[i].size = sizes[i];
-========
-    localElem[i].size = (int)sizes[i]; // Sanity/Debugging
->>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/ibrc_adaptor.cc
     localElem[i].tag = tags[i];
     localElem[i].idx = comm->remFifo.fifoTail + 1;
   }
@@ -2074,17 +2070,8 @@ flagcxResult_t flagcxIbPostFifo(struct flagcxIbRecvComm *comm, int n,
 }
 
 flagcxResult_t flagcxIbIrecv(void *recvComm, int n, void **data, size_t *sizes,
-<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
-<<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
                              int *tags, void **mhandles, void **phandles,
                              void **request) {
-========
-                             int *tags, void **mhandles, void **phandles, void **request) {
->>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/ibrc_adaptor.cc
-=======
-                             int *tags, void **mhandles, void **phandles,
-                             void **request) {
->>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/ibrc_adaptor.cc
   struct flagcxIbRecvComm *comm = (struct flagcxIbRecvComm *)recvComm;
   if (comm->base.ready == 0) {
     WARN("NET/IB: flagcxIbIrecv() called when comm->base.ready == 0");
@@ -2364,15 +2351,7 @@ flagcxResult_t flagcxIbGetDevFromName(char *name, int *dev) {
 flagcxResult_t flagcxIbGetProperties(int dev, void *props) {
   struct flagcxIbMergedDev *mergedDev = flagcxIbMergedDevs + dev;
   flagcxNetProperties_t *properties = (flagcxNetProperties_t *)props;
-<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
-<<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
 
-========
-  
->>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/ibrc_adaptor.cc
-=======
-
->>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/ibrc_adaptor.cc
   properties->name = mergedDev->devName;
   properties->speed = mergedDev->speed;
 
@@ -2403,8 +2382,6 @@ flagcxResult_t flagcxIbGetProperties(int dev, void *props) {
 
 struct flagcxNetAdaptor flagcxNetIb = {
     // Basic functions
-<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
-<<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
     "IB", flagcxIbInit, flagcxIbDevices, flagcxIbGetProperties,
     NULL, // reduceSupport
     NULL, // getDeviceMr
@@ -2420,54 +2397,10 @@ struct flagcxNetAdaptor flagcxNetIb = {
     // Two-sided functions
     flagcxIbIsend, flagcxIbIrecv, flagcxIbIflush, flagcxIbTest,
 
-========
-    "IB",
-    flagcxIbInit,
-    flagcxIbDevices,
-    flagcxIbGetProperties,
-=======
-    "IB", flagcxIbInit, flagcxIbDevices, flagcxIbGetProperties,
->>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/ibrc_adaptor.cc
-    NULL, // reduceSupport
-    NULL, // getDeviceMr
-    NULL, // irecvConsumed
-
-    // Setup functions
-    flagcxIbListen, flagcxIbConnect, flagcxIbAccept, flagcxIbCloseSend,
-    flagcxIbCloseRecv, flagcxIbCloseListen,
-
-    // Memory region functions
-    flagcxIbRegMr, flagcxIbRegMrDmaBuf, flagcxIbDeregMr,
-
-    // Two-sided functions
-<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
-    flagcxIbIsend,
-    flagcxIbIrecv,
-    flagcxIbIflush,
-    flagcxIbTest,
-    
->>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/ibrc_adaptor.cc
-=======
-    flagcxIbIsend, flagcxIbIrecv, flagcxIbIflush, flagcxIbTest,
-
->>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/ibrc_adaptor.cc
     // One-sided functions
     NULL, // write
     NULL, // read
     NULL, // signal
-<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
-<<<<<<<< HEAD:flagcx/adaptor/net/ibrc_adaptor.cc
 
     // Device name lookup
     flagcxIbGetDevFromName};
-========
-    
-    // Device name lookup
-    flagcxIbGetDevFromName
-};
->>>>>>>> f0b2684 (Implement unified network adaptor system and refactor network adaptor):flagcx/adaptor/ccl/ibrc_adaptor.cc
-=======
-
-    // Device name lookup
-    flagcxIbGetDevFromName};
->>>>>>> 7f8c818 (fix code format):flagcx/adaptor/ccl/ibrc_adaptor.cc
