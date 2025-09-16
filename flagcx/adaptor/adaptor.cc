@@ -111,6 +111,7 @@ struct flagcxDeviceAdaptor *deviceAdaptor = &ducudaAdaptor;
 // External adaptor declarations
 extern struct flagcxNetAdaptor flagcxNetSocket;
 extern struct flagcxNetAdaptor flagcxNetIb;
+extern struct flagcxNetAdaptor flagcxNetUcx;
 
 // Unified network adaptor entry point
 struct flagcxNetAdaptor *getUnifiedNetAdaptor(int netType) {
@@ -119,6 +120,8 @@ struct flagcxNetAdaptor *getUnifiedNetAdaptor(int netType) {
       return &flagcxNetIb;
     case SOCKET:
       return &flagcxNetSocket;
+    case UCX:
+      return &flagcxNetUcx;
     default:
       return NULL;
   }

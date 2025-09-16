@@ -1920,7 +1920,7 @@ flagcxResult_t flagcxIbIsend(void *sendComm, void *data, size_t size, int tag,
       union flagcxSocketAddress addr;
       flagcxSocketGetAddr(&comm->base.sock, &addr);
       WARN("NET/IB : req %d/%d tag %x peer %s posted incorrect receive info: "
-           "size %d addr %lx rkeys[0]=%x",
+           "size %zu addr %lx rkeys[0]=%x",
            r, nreqs, tag, flagcxSocketToString(&addr, line), slots[r].size,
            slots[r].addr, slots[r].rkeys[0]);
       return flagcxInternalError;

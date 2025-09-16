@@ -8,18 +8,18 @@
 
 static pthread_mutex_t netLock = PTHREAD_MUTEX_INITIALIZER;
 // Use adaptor system for all network types
-struct flagcxNetAdaptor *flagcxNetAdaptors[3] = {
-    nullptr, getUnifiedNetAdaptor(IBRC), getUnifiedNetAdaptor(SOCKET)};
-flagcxCollNet_t *flagcxCollNets[3] = {nullptr, nullptr, nullptr};
+struct flagcxNetAdaptor *flagcxNetAdaptors[4] = {
+    nullptr, getUnifiedNetAdaptor(IBRC), getUnifiedNetAdaptor(SOCKET), getUnifiedNetAdaptor(UCX)};
+flagcxCollNet_t *flagcxCollNets[4] = {nullptr, nullptr, nullptr, nullptr};
 enum flagcxNetState {
   flagcxNetStateInit = 0,
   flagcxNetStateEnabled = 1,
   flagcxNetStateDisabled = 2
 };
-enum flagcxNetState flagcxNetStates[3] = {
-    flagcxNetStateInit, flagcxNetStateInit, flagcxNetStateInit};
-enum flagcxNetState flagcxCollNetStates[3] = {
-    flagcxNetStateInit, flagcxNetStateInit, flagcxNetStateInit};
+enum flagcxNetState flagcxNetStates[4] = {
+    flagcxNetStateInit, flagcxNetStateInit, flagcxNetStateInit, flagcxNetStateInit};
+enum flagcxNetState flagcxCollNetStates[4] = {
+    flagcxNetStateInit, flagcxNetStateInit, flagcxNetStateInit, flagcxNetStateInit};
 
 flagcxResult_t flagcxNetCheckDeviceVersion(struct flagcxHeteroComm *comm,
                                            struct flagcxNetAdaptor *net,
@@ -95,12 +95,15 @@ flagcxResult_t flagcxNetInit(struct flagcxHeteroComm *comm) {
 
   const char *forceSocketEnv = getenv("FLAGCX_FORCE_NET_SOCKET");
   bool forceSocket = (forceSocketEnv && atoi(forceSocketEnv) == 1);
+  
+  const char *forceUcxEnv = getenv("FLAGCX_FORCE_NET_UCX");
+  bool forceUcx = (forceUcxEnv && atoi(forceUcxEnv) == 1);
 
   netName = comm->config.netName;
 
   if (forceSocket) {
     // Force socket network usage
-    for (int i = 2; i >= 0; i--) {
+    for (int i = 3; i >= 0; i--) {
       if (flagcxNetAdaptors[i] == nullptr)
         continue;
       if (flagcxNetAdaptors[i] != getUnifiedNetAdaptor(SOCKET))
@@ -127,9 +130,38 @@ flagcxResult_t flagcxNetInit(struct flagcxHeteroComm *comm) {
       }
       break;
     }
+  } else if (forceUcx) {
+    // Force UCX network usage
+    for (int i = 3; i >= 0; i--) {
+      if (flagcxNetAdaptors[i] == nullptr)
+        continue;
+      if (flagcxNetAdaptors[i] != getUnifiedNetAdaptor(UCX))
+        continue;
+      
+      enum flagcxNetState state;
+      FLAGCXCHECK(netGetState(i, &state));
+      if (state != flagcxNetStateEnabled)
+        continue;
+      if (netName && strcasecmp(netName, flagcxNetAdaptors[i]->name) != 0)
+        continue;
+      if (flagcxSuccess !=
+          flagcxNetCheckDeviceVersion(comm, flagcxNetAdaptors[i], 0))
+        continue;
+
+      comm->netAdaptor = flagcxNetAdaptors[i];
+      ok = true;
+
+      if (flagcxCollNets[i]) {
+        FLAGCXCHECK(collNetGetState(i, &state));
+        if (state == flagcxNetStateEnabled) {
+          comm->flagcxCollNet = flagcxCollNets[i];
+        }
+      }
+      break;
+    }
   } else {
-    // Normal network selection order (IBRC first, then socket)
-    for (int i = 0; i < 3; i++) {
+    // Normal network selection order (IBRC first, then UCX, then socket)
+    for (int i = 0; i < 4; i++) {
       if (flagcxNetAdaptors[i] == nullptr)
         continue;
       enum flagcxNetState state;
@@ -176,7 +208,7 @@ flagcxResult_t flagcxProxySend(sendNetResources *resources, void *data,
       args->subs[step].stepSize =
           std::min(args->chunkSize, size - args->totalCopySize);
       args->subs[step].stepBuff = resources->buffers[0] + (CHUNKSIZE * step);
-      if (resources->netAdaptor == getUnifiedNetAdaptor(IBRC)) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(IBRC) || resources->netAdaptor == getUnifiedNetAdaptor(UCX)) {
         FLAGCXCHECK(deviceAdaptor->deviceMemcpy(
             args->subs[step].stepBuff, (char *)data + args->totalCopySize,
             args->subs[step].stepSize, flagcxMemcpyDeviceToDevice,
@@ -271,7 +303,7 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
     }
 
     if (args->postFlush < args->transmitted) {
-      if (resources->netAdaptor == getUnifiedNetAdaptor(IBRC)) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(IBRC) || resources->netAdaptor == getUnifiedNetAdaptor(UCX)) {
         void *req = NULL;
         void *allData[] = {args->subs[args->postFlush & stepMask].stepBuff};
         resources->netAdaptor->iflush(
@@ -303,7 +335,7 @@ flagcxResult_t flagcxProxyRecv(recvNetResources *resources, void *data,
 
     if (args->waitCopy < args->flushed) {
       int step = args->waitCopy & stepMask;
-      if (resources->netAdaptor == getUnifiedNetAdaptor(IBRC)) {
+      if (resources->netAdaptor == getUnifiedNetAdaptor(IBRC) || resources->netAdaptor == getUnifiedNetAdaptor(UCX)) {
         FLAGCXCHECK(deviceAdaptor->deviceMemcpy(
             (char *)data + args->totalCopySize, args->subs[step].stepBuff,
             args->subs[step].stepSize, flagcxMemcpyDeviceToDevice,
