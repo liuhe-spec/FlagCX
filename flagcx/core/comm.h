@@ -177,7 +177,6 @@ struct flagcxHeteroComm {
   struct flagcxInterServerTopo *interServerTopo;
 
   struct flagcxNetAdaptor *netAdaptor;
-  flagcxCollNet_t *flagcxCollNet;
   struct bootstrapState *bootstrap;
   // Bitmasks for flagcxTransportP2pSetup
   uint64_t *connectSend;

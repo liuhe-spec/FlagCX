@@ -366,6 +366,10 @@ typedef struct {
 } flagcxCollNet_v9_t;
 
 typedef struct {
+  int ndevs;
+  int devs[FLAGCX_NET_MAX_DEVS_PER_NIC_V9];
+} flagcxNetVDeviceProps_v8_t;
+typedef struct {
   char *name;      // Used mostly for logging.
   char *pciPath;   // Path to the PCI device in /sys.
   uint64_t guid;   // Unique identifier for the NIC chip. Important for
