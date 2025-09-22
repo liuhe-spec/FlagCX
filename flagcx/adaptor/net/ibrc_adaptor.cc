@@ -21,8 +21,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 #define ENABLE_TIMER 0
-#include "net.h"
 #include "ib_common.h"
+#include "net.h"
 #include "timer.h"
 
 static char flagcxIbIfName[MAX_IF_NAME_SIZE + 1];

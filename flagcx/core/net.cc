@@ -69,7 +69,6 @@ static flagcxResult_t netGetState(int i, enum flagcxNetState *state) {
   return flagcxSuccess;
 }
 
-
 flagcxResult_t flagcxNetInit(struct flagcxHeteroComm *comm) {
   // Initialize main communication network
   const char *netName;

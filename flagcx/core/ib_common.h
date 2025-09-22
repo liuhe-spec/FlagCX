@@ -9,17 +9,18 @@
 #ifndef FLAGCX_IB_COMMON_H_
 #define FLAGCX_IB_COMMON_H_
 
-#include <stdint.h>
-#include <pthread.h>
 #include "ibvcore.h"
+#include <pthread.h>
+#include <stdint.h>
 
 // Common constants for IB adaptors
 #define MAXNAMESIZE 64
 #define MAX_IB_DEVS 32
 #define FLAGCX_IB_MAX_DEVS_PER_NIC 2
 #define FLAGCX_NET_MAX_DEVS_PER_NIC 4
-#define MAX_MERGED_DEV_NAME (MAXNAMESIZE*FLAGCX_IB_MAX_DEVS_PER_NIC)+FLAGCX_IB_MAX_DEVS_PER_NIC
-#define MAX_IB_VDEVS MAX_IB_DEVS*8
+#define MAX_MERGED_DEV_NAME                                                    \
+  (MAXNAMESIZE * FLAGCX_IB_MAX_DEVS_PER_NIC) + FLAGCX_IB_MAX_DEVS_PER_NIC
+#define MAX_IB_VDEVS MAX_IB_DEVS * 8
 
 // Common enums and constants
 enum flagcxIbProvider {
@@ -28,11 +29,8 @@ enum flagcxIbProvider {
   IB_PROVIDER_MLX4 = 2
 };
 
-static const char* ibProviderName[] __attribute__((unused)) = {
-  "NONE",
-  "MLX5", 
-  "MLX4"
-};
+static const char *ibProviderName[]
+    __attribute__((unused)) = {"NONE", "MLX5", "MLX4"};
 
 // Common parameter function declarations
 extern int64_t flagcxParamIbMergeVfs(void);
@@ -97,10 +95,10 @@ struct flagcxIbMergedDev {
   // Direct fields (used by IBRC)
   int ndevs;
   int devs[FLAGCX_IB_MAX_DEVS_PER_NIC];
-  
+
   // Structured fields (used by UCX)
   flagcxNetVDeviceProps_t vProps;
-  
+
   // Common fields
   int speed;
   char devName[MAX_MERGED_DEV_NAME];
