@@ -9,6 +9,7 @@
 #ifndef FLAGCX_IB_COMMON_H_
 #define FLAGCX_IB_COMMON_H_
 
+#include "flagcx_net.h"
 #include "ibvcore.h"
 #include <pthread.h>
 #include <stdint.h>
@@ -54,11 +55,7 @@ struct flagcxIbStats {
   int fatalErrorCount;
 };
 
-// Common device properties structure
-typedef struct {
-  int ndevs;
-  int devs[FLAGCX_IB_MAX_DEVS_PER_NIC];
-} flagcxNetVDeviceProps_t;
+// Common device properties structure is now defined in flagcx_net.h
 
 // Unified IB device structure (combines features from both adaptors)
 struct flagcxIbDev {
@@ -96,7 +93,7 @@ struct flagcxIbMergedDev {
   int ndevs;
   int devs[FLAGCX_IB_MAX_DEVS_PER_NIC];
 
-  // Structured fields (used by UCX)
+  // Structured fields (used by UCX) - now uses flagcx_net.h definition
   flagcxNetVDeviceProps_t vProps;
 
   // Common fields

@@ -8,7 +8,9 @@
 
 #ifdef USE_UCX
 
+#include "ucx_adaptor.h"
 #include "adaptor.h"
+#include "check.h"
 #include "comm.h"
 #include "core.h"
 #include "debug.h"
@@ -28,36 +30,15 @@
 #include <ucp/api/ucp.h>
 #include <unistd.h>
 
-// Additional macro definitions
-#define MAX_REQUESTS 16
-// Parameter function declarations (now in ib_common.h)
-
-// Type definitions
-// Structures now defined in ib_common.h
-#define PTHREADCHECKGOTO(statement, name, RES, label)                          \
-  do {                                                                         \
-    int retval = (statement);                                                  \
-    if (retval != 0) {                                                         \
-      WARN("Call to " name " failed: %s", strerror(retval));                   \
-      RES = flagcxSystemError;                                                 \
-      goto label;                                                              \
-    }                                                                          \
-  } while (0)
-// Enums and constants (now defined in ib_common.h)
-
 #define FLAGCX_IB_LLSTR(link_layer)                                            \
   ((link_layer) == IBV_LINK_LAYER_INFINIBAND ? "IB" : "ETH")
-#define FLAGCX_NET_IB_MAX_RECVS 16
 #define FLAGCX_STATIC_ASSERT(condition, message)                               \
   static_assert(condition, message)
-#define FLAGCX_NET_HANDLE_MAXSIZE 128
-FLAGCX_PARAM(SharpMaxComms, "SHARP_MAX_COMMS", 1);
 // Global variables (now defined in ib_common.h)
 
 // Additional global variables
 static int flagcxNIbDevs = -1;
 static int flagcxNMergedIbDevs = -1;
-static int flagcxNSharpDevs = 0;
 static pthread_mutex_t flagcx_p2p_lock = PTHREAD_MUTEX_INITIALIZER;
 static int flagcxIbGdrModuleLoaded = 0;
 static struct { pthread_once_t once; } onces[MAX_IB_DEVS];
@@ -88,7 +69,7 @@ flagcxResult_t flagcxIbMakeVDeviceInternal(int *d,
 
   for (int i = 0; i < props->ndevs; i++) {
     flagcxIbDev *dev = flagcxIbDevs + props->devs[i];
-    if (mDev->vProps.ndevs == 2)
+    if (mDev->vProps.ndevs == FLAGCX_IB_MAX_DEVS_PER_NIC)
       return flagcxInvalidUsage; // FLAGCX_IB_MAX_DEVS_PER_NIC
     mDev->vProps.devs[mDev->vProps.ndevs++] = props->devs[i];
     mDev->speed += dev->speed;
@@ -160,7 +141,7 @@ static void ibGdrSupportInitOnce() {
 }
 
 /* for data direct nic, the device name is ends with suffix '_dma`.
- * remove this suffix before passing name to libsharp */
+ * remove this suffix before passing name to device */
 void plugin_get_device_name(const char *input, char *output,
                             size_t output_size) {
   const char *suffix = "_dma";
@@ -208,9 +189,8 @@ flagcxResult_t flagcxIbStatsInit(struct flagcxIbStats *stat) {
   return flagcxSuccess;
 }
 
-flagcxResult_t flagcx_p2p_ib_pci_path(flagcxIbDev *devs, int num_devs,
-                                      char *dev_name, char **path,
-                                      int *real_port) {
+flagcxResult_t flagcxP2pIbPciPath(flagcxIbDev *devs, int num_devs,
+                                  char *dev_name, char **path, int *real_port) {
   char device_path[PATH_MAX];
   snprintf(device_path, PATH_MAX, "/sys/class/infiniband/%s/device", dev_name);
   char *p = realpath(device_path, NULL);
@@ -282,59 +262,14 @@ static void *flagcxIbAsyncThreadMain(void *args) {
   return NULL;
 }
 
-#define UCXCHECK(cmd)                                                          \
-  do {                                                                         \
-    ucs_status_t e = cmd;                                                      \
-    if (UCS_OK != e) {                                                         \
-      WARN("Failed: UCX error %s:%d '%s'\n", __FILE__, __LINE__,               \
-           ucs_status_string(e));                                              \
-      return flagcxInternalError;                                              \
-    }                                                                          \
-  } while (0)
-
-#define UCXCHECK_VOID(cmd)                                                     \
-  do {                                                                         \
-    ucs_status_t e = cmd;                                                      \
-    if (UCS_OK != e) {                                                         \
-      WARN("Failed: UCX error %s:%d '%s'\n", __FILE__, __LINE__,               \
-           ucs_status_string(e));                                              \
-    }                                                                          \
-  } while (0)
-
-// With flagcxNet_v11_t the FlagCX core initializes the network plugin
-// per-communicator rather than once for all communicators. However, the
-// internal plugin implementation still assumes the plugin is initialized only
-// once across all communicators. The ref counter makes sure the plugin
-// internally initializes only once. When per communicator context support is
-// added to the plugin the ref counter can be removed.
 static int flagcxUcxRefCount = 0;
 
 FLAGCX_PARAM(UCXDisable, "UCX_DISABLE", 0);
 /* Exclude cuda-related UCX transports */
 FLAGCX_PARAM(UCXCudaDisable, "UCX_CUDA_DISABLE", 1);
 
-flagcxDebugLogger_t flagcxUcxPluginLogFunction;
 static const ucp_tag_t tag = 0x8a000000;
 static const ucp_tag_t tagMask = (uint64_t)(-1);
-
-enum flagcxUCXCommState {
-  flagcxUCXCommStateStart = 0,
-  flagcxUCXCommStateConnect = 1,
-  flagcxUCXCommStateAccept = 3,
-};
-
-struct flagcxUCXCommStage {
-  enum flagcxUCXCommState state;
-  uint8_t iteration;
-  void *sock;
-  void *comm;
-};
-
-typedef struct flagcxUcxMhandle {
-  ucp_mem_h ucp_memh;
-  ucp_rkey_h rkey;
-  int mem_type;
-} flagcxUcxMhandle_t;
 
 flagcxResult_t flagcxUcxDevices(int *ndev) {
   *ndev = flagcxNIbDevs;
@@ -393,12 +328,10 @@ flagcxResult_t flagcx_p2p_ib_init(int *nDevs, int *nmDevs,
                                   flagcxIbDev *flagcxIbDevs,
                                   char *flagcxIbIfName,
                                   union flagcxSocketAddress *flagcxIbIfAddr,
-                                  pthread_t *flagcxIbAsyncThread,
-                                  flagcxDebugLogger_t logFunction) {
+                                  pthread_t *flagcxIbAsyncThread) {
   flagcxResult_t ret = flagcxSuccess;
   int flagcxNIbDevs = *nDevs;
   int flagcxNMergedIbDevs = *nmDevs;
-  flagcxUcxPluginLogFunction = logFunction;
   if (flagcxNIbDevs == -1) {
     for (int i = 0; i < MAX_IB_DEVS; i++)
       onces[i].once = PTHREAD_ONCE_INIT;
@@ -408,7 +341,6 @@ flagcxResult_t flagcx_p2p_ib_init(int *nDevs, int *nmDevs,
       int nIpIfs = 0;
       flagcxNIbDevs = 0;
       flagcxNMergedIbDevs = 0;
-      flagcxNSharpDevs = 0;
       nIpIfs = flagcxFindInterfaces(flagcxIbIfName, flagcxIbIfAddr,
                                     MAX_IF_NAME_SIZE, 1);
       if (nIpIfs != 1) {
@@ -501,10 +433,10 @@ flagcxResult_t flagcx_p2p_ib_init(int *nDevs, int *nmDevs,
               strncpy(flagcxIbDevs[flagcxNIbDevs].devName, devices[d]->name,
                       MAXNAMESIZE);
               FLAGCXCHECKGOTO(
-                  flagcx_p2p_ib_pci_path(flagcxIbDevs, flagcxNIbDevs,
-                                         flagcxIbDevs[flagcxNIbDevs].devName,
-                                         &flagcxIbDevs[flagcxNIbDevs].pciPath,
-                                         &flagcxIbDevs[flagcxNIbDevs].realPort),
+                  flagcxP2pIbPciPath(flagcxIbDevs, flagcxNIbDevs,
+                                     flagcxIbDevs[flagcxNIbDevs].devName,
+                                     &flagcxIbDevs[flagcxNIbDevs].pciPath,
+                                     &flagcxIbDevs[flagcxNIbDevs].realPort),
                   ret, fail);
             } else {
               snprintf(flagcxIbDevs[flagcxNIbDevs].devName, MAXNAMESIZE,
@@ -527,12 +459,6 @@ flagcxResult_t flagcx_p2p_ib_init(int *nDevs, int *nmDevs,
             if (flagcxParamIbAdaptiveRouting() != -2)
               flagcxIbDevs[flagcxNIbDevs].ar = flagcxParamIbAdaptiveRouting();
 
-            flagcxIbDevs[flagcxNIbDevs].isSharpDev = 0;
-            if (portAttr.link_layer == IBV_LINK_LAYER_INFINIBAND) {
-              flagcxIbDevs[flagcxNIbDevs].isSharpDev = 1;
-              flagcxIbDevs[flagcxNIbDevs].maxQp = flagcxParamSharpMaxComms();
-              flagcxNSharpDevs++;
-            }
             TRACE(FLAGCX_NET,
                   "NET/IB: [%d] %s:%s:%d/%s provider=%s speed=%d context=%p "
                   "pciPath=%s ar=%d",
@@ -590,16 +516,9 @@ flagcxResult_t flagcx_p2p_ib_init(int *nDevs, int *nmDevs,
     flagcxIbRelaxedOrderingEnabled = flagcxIbRelaxedOrderingCapable();
 #endif
     for (int d = 0; d < flagcxNIbDevs; d++) {
-#ifdef HAVE_SHARP_PLUGIN
-      snprintf(line + strlen(line), sizeof(line) - strlen(line),
-               " [%d]%s:%d/%s%s", d, flagcxIbDevs[d].devName,
-               flagcxIbDevs[d].portNum, FLAGCX_IB_LLSTR(flagcxIbDevs[d].link),
-               flagcxIbDevs[d].isSharpDev ? "/SHARP" : "");
-#else
       snprintf(line + strlen(line), sizeof(line) - strlen(line),
                " [%d]%s:%d/%s", d, flagcxIbDevs[d].devName,
                flagcxIbDevs[d].portNum, FLAGCX_IB_LLSTR(flagcxIbDevs[d].link));
-#endif
     }
     char addrline[SOCKET_NAME_MAXLEN + 1];
     INFO(FLAGCX_INIT | FLAGCX_NET, "NET/IB : Using%s %s; OOB %s:%s", line,
@@ -666,8 +585,6 @@ flagcxResult_t flagcx_p2p_ib_get_properties(flagcxIbDev *devs,
   FLAGCXCHECK(flagcxIbGetPhysProperties(mergedDev->vProps.devs[0], props));
   props->name = mergedDev->devName;
   props->speed = mergedDev->speed;
-  //   memcpy(&props->vProps, &mergedDev->vProps,
-  //   sizeof(flagcxNetVDeviceProps_v8_t));
   return flagcxSuccess;
 }
 flagcxResult_t flagcxUcxGetProperties(int dev, void *props) {
@@ -677,110 +594,10 @@ flagcxResult_t flagcxUcxGetProperties(int dev, void *props) {
 
 pthread_mutex_t flagcxUcxLock = PTHREAD_MUTEX_INITIALIZER;
 
-struct flagcxUcxEpList {
-  struct flagcxSocket *sock;
-  struct flagcxUcxEpList *next;
-};
-
-/**
- * Connection descriptor. Used to store all opened connections.
- */
-typedef struct ucx_worker {
-  ucp_worker_h worker; /* ucp worker associated with ctx */
-  ucp_context_h ctx;   /* ucp_context bounded to specific device */
-  struct flagcxUcxEpList
-      *eps; /* oob conection to all endpoints that were opened on this worker */
-
-  int count;        /* number of connections that uses this worker */
-  int dev;          /* Managed device */
-  pthread_t thread; /* Owner thread */
-
-  struct ucx_worker *next;
-} ucx_worker_t;
-
-/**
- * Listen handle that is sent from receiver to sender through OOB connection
- */
-typedef struct flagcxUcxListenHandle {
-  union flagcxSocketAddress connectAddr; /* reciever socket address */
-  uint64_t magic;                        /* random number to help debugging */
-  ucp_tag_t tag; /* tag that is used to distiguish data that was sent to
-                    this reciever. Required when shared worker is used. */
-  struct flagcxUCXCommStage stage;
-} flagcxUcxListenHandle_t;
-
-/**
- * Listen commincator for UCX plugin.
- */
-typedef struct flagcxUcxListenComm {
-  int dev;                  /* device number in flagcxIbDevs which will
-                             * be used to recieve data */
-  struct flagcxSocket sock; /* socket for OOB connection */
-  ucp_context_h ctx; /* ucp_context associated with specific device dev */
-  ucx_worker_t *ucx_worker; /* ucx_worker created on ctx, worker can be shared
-                           between multiple connections */
-  ucp_tag_t tag; /* tag that is used to distiguish data that was sent to
-                    this reciever. Required when shared worker is used.*/
-  struct flagcxUCXCommStage stage;
-} flagcxUcxListenComm_t;
-
-typedef struct flagcxUcxConnectMsg {
-  size_t addr_len;
-} flagcxUcxConnectMsg_t;
-
-struct flagcxUcxComm;
-
-/**
- * Batch of UCX Requests from FlagCX perspective
- */
-typedef struct flagcxUcxRequest {
-  struct flagcxUcxRequest *next; /* Next request in the free list */
-  struct flagcxUcxComm *comm;    /* Owning communicator */
-  ucp_worker_h worker;           /* Worker for all requests */
-  int pending;                   /* How many requests are still pending */
-  int count;                     /* How many requests are contained */
-  int size[FLAGCX_NET_IB_MAX_RECVS];
-} flagcxUcxRequest_t;
-
 static ucp_tag_t flagcxUcxWorkerTags[MAX_IB_DEVS];
 static ucp_context_h flagcxUcxCtx[MAX_IB_DEVS];
-static struct ucx_worker *flagcxUcxWorkers[MAX_IB_DEVS];
-static int ucx_workerCount = 0;
-
-typedef struct flagcxUcxGpuFlush {
-  int enabled;
-  int hostMem;
-  ucp_ep_h flush_ep;
-} flagcxUcxGpuFlush_t;
-
-/**
- * Common data member for ucx_comm for send and receive
- * Used to map/unmap memory in flagcxUcxRegMr/flagcxUcxDeregMr
- */
-typedef struct flagcxUcxCtx {
-  ucp_context_h flagcxUcxCtx;
-  flagcxUcxGpuFlush_t gpuFlush;
-} flagcxUcxCtx_t;
-
-/**
- * Sender and Receiver communicator
- */
-typedef struct flagcxUcxComm {
-  ucp_context_h ctx;            /* ucp_context bounded to specific device */
-  flagcxUcxGpuFlush_t gpuFlush; /* flushing handle */
-  ucx_worker_t *ucx_worker;     /* ucp worker associated with ctx */
-  ucp_ep_h ep;                  /* ucp endpoint created on worker */
-  ucp_tag_t tag;  /* datapath tag to filter out message that are not
-                     belong to this connnection */
-  ucp_tag_t ctag; /* controlpath tag to filter out message that are not
-                     belong to this connnection */
-  struct flagcxSocket sock; /* socket for OOB connection */
-  int ready; /* indicates that receive communicator is fully initialized */
-  flagcxUcxRequest_t reqs[MAX_REQUESTS]; /* max inflight requests */
-  flagcxUcxRequest_t *free_req;          /* first request available */
-  flagcxUcxConnectMsg_t *msg; /* message to establish reverse connection */
-  void *connect_req;          /* msg request */
-} flagcxUcxComm_t;
+static struct flagcxUcxWorker *flagcxUcxWorkers[MAX_IB_DEVS];
+static int flagcxUcxWorkerCount = 0;
 
 static void send_handler_nbx(void *request, ucs_status_t status,
                              void *user_data) {
@@ -916,7 +733,7 @@ static flagcxResult_t flagcxUcxWorkerGetNetaddress(ucp_worker_h worker,
 }
 
 static flagcxResult_t flagcxUcxGetCtxAndWorker(int dev, ucp_context_h *ctx,
-                                               ucx_worker_t **ucx_worker,
+                                               flagcxUcxWorker_t **ucx_worker,
                                                ucp_tag_t *newtag) {
   pthread_mutex_lock(&flagcxUcxLock);
   flagcxResult_t result;
@@ -926,7 +743,7 @@ static flagcxResult_t flagcxUcxGetCtxAndWorker(int dev, ucp_context_h *ctx,
     goto err;
   }
 
-  ucx_worker_t *w;
+  flagcxUcxWorker_t *w;
   for (w = flagcxUcxWorkers[dev]; w != NULL; w = w->next) {
     assert(w->dev == dev);
     if (w->thread == pthread_self()) {
@@ -935,7 +752,7 @@ static flagcxResult_t flagcxUcxGetCtxAndWorker(int dev, ucp_context_h *ctx,
   }
 
   if (w == NULL) {
-    w = (ucx_worker_t *)calloc(1, sizeof(*w));
+    w = (flagcxUcxWorker_t *)calloc(1, sizeof(*w));
     if (w == NULL) {
       WARN("Worker allocation failure");
       goto err;
@@ -950,7 +767,7 @@ static flagcxResult_t flagcxUcxGetCtxAndWorker(int dev, ucp_context_h *ctx,
       return result;
     }
     flagcxUcxInitWorker(w->ctx, &w->worker);
-    ucx_workerCount++;
+    flagcxUcxWorkerCount++;
 
     w->next = flagcxUcxWorkers[dev];
     flagcxUcxWorkers[dev] = w;
@@ -972,17 +789,17 @@ err:
   return flagcxSystemError;
 }
 
-static flagcxResult_t flagcxUcxFreeWorker(ucx_worker_t *ucx_worker) {
+static flagcxResult_t flagcxUcxFreeWorker(flagcxUcxWorker_t *ucx_worker) {
   int dev, dummy, done = 0;
   struct flagcxUcxEpList *ep, *cur;
-  struct ucx_worker *next;
+  struct flagcxUcxWorker *next;
   flagcxResult_t result;
 
   pthread_mutex_lock(&flagcxUcxLock);
   ucx_worker->count--;
   if (ucx_worker->count == 0) {
-    ucx_workerCount--;
-    done = ucx_workerCount == 0;
+    flagcxUcxWorkerCount--;
+    done = flagcxUcxWorkerCount == 0;
   }
   pthread_mutex_unlock(&flagcxUcxLock);
 
@@ -1023,7 +840,7 @@ static flagcxResult_t flagcxUcxFreeWorker(ucx_worker_t *ucx_worker) {
   return flagcxSuccess;
 }
 
-static flagcxResult_t flagcxUcxAddEp(ucx_worker_t *ucx_worker,
+static flagcxResult_t flagcxUcxAddEp(flagcxUcxWorker_t *ucx_worker,
                                      struct flagcxSocket *sock) {
   struct flagcxUcxEpList *new_ep =
       (struct flagcxUcxEpList *)malloc(sizeof(struct flagcxUcxEpList));
@@ -1055,7 +872,7 @@ flagcxResult_t flagcxUcxInit() {
   }
 
   return flagcx_p2p_ib_init(&flagcxNIbDevs, &flagcxNMergedIbDevs, flagcxIbDevs,
-                            if_name, &flagcxUcxIfAddr, NULL, NULL);
+                            if_name, &flagcxUcxIfAddr, NULL);
 }
 
 flagcxResult_t flagcxUcxListen(int dev, void *handle, void **listen_comm) {
@@ -1094,7 +911,7 @@ static void flagcxUcxRequestInit(flagcxUcxComm_t *comm) {
 
 flagcxResult_t flagcxUcxConnect(int dev, void *handle, void **send_comm) {
   flagcxUcxListenHandle_t *recv_handle = (flagcxUcxListenHandle_t *)handle;
-  struct flagcxUCXCommStage *stage = &recv_handle->stage;
+  struct flagcxUcxCommStage *stage = &recv_handle->stage;
   flagcxUcxComm_t *comm = (flagcxUcxComm_t *)stage->comm;
   ucp_address_t *my_addr;
   size_t local_addr_len;
@@ -1102,7 +919,7 @@ flagcxResult_t flagcxUcxConnect(int dev, void *handle, void **send_comm) {
 
   *send_comm = NULL;
 
-  if (stage->state == flagcxUCXCommStateConnect)
+  if (stage->state == flagcxUcxCommStateConnect)
     goto flagcxUcxConnectCheck;
 
   FLAGCXCHECK(flagcxIbMalloc((void **)&comm, sizeof(flagcxUcxComm_t)));
@@ -1110,7 +927,7 @@ flagcxResult_t flagcxUcxConnect(int dev, void *handle, void **send_comm) {
                                recv_handle->magic, flagcxSocketTypeNetIb, NULL,
                                1));
   stage->comm = comm;
-  stage->state = flagcxUCXCommStateConnect;
+  stage->state = flagcxUcxCommStateConnect;
   FLAGCXCHECK(flagcxSocketConnect(&comm->sock));
   flagcxUcxRequestInit(comm);
 
@@ -1141,7 +958,7 @@ flagcxUcxConnectCheck:
 
 flagcxResult_t flagcxUcxAccept(void *listen_comm, void **recv_comm) {
   flagcxUcxListenComm_t *l_comm = (flagcxUcxListenComm_t *)listen_comm;
-  struct flagcxUCXCommStage *stage = &l_comm->stage;
+  struct flagcxUcxCommStage *stage = &l_comm->stage;
   flagcxUcxComm_t *r_comm = (flagcxUcxComm_t *)stage->comm;
   size_t peer_addr_len;
   ucp_address_t *peer_addr;
@@ -1149,12 +966,12 @@ flagcxResult_t flagcxUcxAccept(void *listen_comm, void **recv_comm) {
   int ready;
 
   *recv_comm = NULL;
-  if (stage->state == flagcxUCXCommStateAccept)
+  if (stage->state == flagcxUcxCommStateAccept)
     goto flagcxUcxAcceptCheck;
 
   FLAGCXCHECK(flagcxIbMalloc((void **)&r_comm, sizeof(flagcxUcxComm_t)));
   stage->comm = r_comm;
-  stage->state = flagcxUCXCommStateAccept;
+  stage->state = flagcxUcxCommStateAccept;
   l_comm->sock.asyncFlag = 1;
   r_comm->sock.asyncFlag = 1;
 
