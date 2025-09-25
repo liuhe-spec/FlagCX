@@ -14,6 +14,7 @@
 #include "check.h"
 #include <pthread.h>
 #include <ucp/api/ucp.h>
+#include "socket.h"
 
 // UCX Constants
 #define MAX_REQUESTS 16

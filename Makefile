@@ -204,6 +204,11 @@ ifeq ($(USE_UCX), 1)
 	UCX_INCLUDE = $(UCX_HOME)/include
 	UCX_LINK = -lucp -lucs -luct
 	NET_ADAPTOR_FLAG = -DUSE_UCX
+else
+	UCX_LIB = $(UCX_HOME)/lib
+	UCX_INCLUDE = $(UCX_HOME)/include
+	UCX_LINK = 
+	NET_ADAPTOR_FLAG = 
 endif
 
 LIBDIR := $(BUILDDIR)/lib
@@ -252,6 +257,11 @@ print_var:
 	@echo "HOST_CCL_INCLUDE: $(HOST_CCL_INCLUDE)"
 	@echo "ADAPTOR_FLAG: $(ADAPTOR_FLAG)"
 	@echo "HOST_CCL_ADAPTOR_FLAG: $(HOST_CCL_ADAPTOR_FLAG)"
+	@echo "USE_UCX: $(USE_UCX)"
+	@echo "UCX_HOME: $(UCX_HOME)"
+	@echo "UCX_LIB: $(UCX_LIB)"
+	@echo "UCX_INCLUDE: $(UCX_INCLUDE)"
+	@echo "NET_ADAPTOR_FLAG: $(NET_ADAPTOR_FLAG)"
 
 $(LIBDIR)/$(TARGET): $(LIBOBJ)
 	@mkdir -p `dirname $@`
