@@ -12,9 +12,9 @@
 #ifdef USE_UCX
 
 #include "check.h"
+#include "socket.h"
 #include <pthread.h>
 #include <ucp/api/ucp.h>
-#include "socket.h"
 
 // UCX Constants
 #define MAX_REQUESTS 16
