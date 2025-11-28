@@ -1,7 +1,9 @@
 #include "flagcx.h"
 #include "tools.h"
 
+#include "alloc.h"
 #include "bootstrap.h"
+#include "check.h"
 #include "comm.h"
 #include "device.h"
 #include "flagcx/adaptor/include/adaptor.h"
@@ -9,8 +11,6 @@
 #include "flagcx_net.h"
 #include "global_comm.h"
 #include "net.h"
-#include "alloc.h"
-#include "check.h"
 
 #include <algorithm>
 #include <cassert>
@@ -169,7 +169,8 @@ int main(int argc, char *argv[]) {
 
   size_t signalBytes = sizeof(uint64_t);
   size_t max_iterations = std::max(num_warmup_iters, num_iters);
-  size_t window_bytes = max_bytes * max_iterations + signalBytes * max_iterations;
+  size_t window_bytes =
+      max_bytes * max_iterations + signalBytes * max_iterations;
 
   void *window = nullptr;
   if (posix_memalign(&window, 64, window_bytes) != 0 || window == nullptr) {
@@ -186,8 +187,7 @@ int main(int argc, char *argv[]) {
                           &mrHandle);
   fatal(res, "netAdaptor->regMr failed", proc);
 
-  struct flagcxIbMrHandle *localMrHandle =
-      (struct flagcxIbMrHandle *)mrHandle;
+  struct flagcxIbMrHandle *localMrHandle = (struct flagcxIbMrHandle *)mrHandle;
   struct ibv_mr *mr = localMrHandle->mrs[0];
 
   int nranks = state->nranks;
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) {
   info->lkeys[state->rank] = mr->lkey;
 
   res = bootstrapAllGather(innerComm->bootstrap, (void *)info->base_vas,
-                            sizeof(uintptr_t));
+                           sizeof(uintptr_t));
   fatal(res, "bootstrapAllGather failed for base_vas", proc);
   res = bootstrapAllGather(innerComm->bootstrap, (void *)info->rkeys,
                            sizeof(uint32_t));
@@ -230,21 +230,22 @@ int main(int argc, char *argv[]) {
       // Use different offset for each iteration to avoid address conflicts
       size_t current_send_offset = i * size;
       size_t current_recv_offset = i * size;
-      
+
       if (isSender) {
-        
+
         uint8_t value = static_cast<uint8_t>((senderRank + i) & 0xff);
         std::memset((char *)window + current_send_offset, value, size);
 
         void *putReq = nullptr;
-        res = netAdaptor->put(sendComm, current_send_offset, current_recv_offset, size, senderRank,
+        res = netAdaptor->put(sendComm, current_send_offset,
+                              current_recv_offset, size, senderRank,
                               receiverRank, (void **)globalHandles, &putReq);
         fatal(res, "netAdaptor->put warmup failed", proc);
 
         void *sigReq = nullptr;
         res = netAdaptor->putSignal(sendComm, signalOffset, senderRank,
-                                     senderRank, receiverRank,
-                                     (void **)globalHandles, &sigReq);
+                                    senderRank, receiverRank,
+                                    (void **)globalHandles, &sigReq);
         fatal(res, "netAdaptor->putSignal warmup failed", proc);
       } else if (isReceiver) {
         res = netAdaptor->waitValue((void **)globalHandles, receiverRank,
@@ -262,36 +263,40 @@ int main(int argc, char *argv[]) {
       // Use different offset for each iteration to avoid address conflicts
       size_t current_send_offset = i * size;
       size_t current_recv_offset = i * size;
-      
+
       if (isSender) {
-        
+
         uint8_t value = static_cast<uint8_t>((senderRank + i) & 0xff);
         std::memset((char *)window + current_send_offset, value, size);
 
         void *putReq = nullptr;
-        res = netAdaptor->put(sendComm, current_send_offset, current_recv_offset, size, senderRank,
+        res = netAdaptor->put(sendComm, current_send_offset,
+                              current_recv_offset, size, senderRank,
                               receiverRank, (void **)globalHandles, &putReq);
         fatal(res, "netAdaptor->put failed", proc);
 
         void *sigReq = nullptr;
         res = netAdaptor->putSignal(sendComm, signalOffset, senderRank,
-                                     senderRank, receiverRank,
-                                     (void **)globalHandles, &sigReq);
+                                    senderRank, receiverRank,
+                                    (void **)globalHandles, &sigReq);
         fatal(res, "netAdaptor->putSignal failed", proc);
       } else if (isReceiver) {
         res = netAdaptor->waitValue((void **)globalHandles, receiverRank,
                                     signalOffset, 1);
         fatal(res, "netAdaptor->waitValue failed", proc);
-        
+
         if (print_buffer) {
-          printf("[rank %d] Received data at offset %zu, size %zu:\n", 
-                 proc, current_recv_offset, size);
+          printf("[rank %d] Received data at offset %zu, size %zu:\n", proc,
+                 current_recv_offset, size);
           for (size_t j = 0; j < size && j < 64; ++j) {
             printf("%02x ", ((unsigned char *)window)[current_recv_offset + j]);
-            if ((j + 1) % 16 == 0) printf("\n");
+            if ((j + 1) % 16 == 0)
+              printf("\n");
           }
-          if (size > 64) printf("... (truncated)\n");
-          else printf("\n");
+          if (size > 64)
+            printf("... (truncated)\n");
+          else
+            printf("\n");
         }
       }
     }
@@ -304,8 +309,8 @@ int main(int argc, char *argv[]) {
 
       double bandwidth = (double)size / 1.0e9 / elapsed_time;
       if (proc == 0 && color == 0) {
-        printf("Size: %zu bytes; Avg time: %lf sec; Bandwidth: %lf GB/s\n", size,
-               elapsed_time, bandwidth);
+        printf("Size: %zu bytes; Avg time: %lf sec; Bandwidth: %lf GB/s\n",
+               size, elapsed_time, bandwidth);
       }
     }
 
@@ -325,7 +330,7 @@ int main(int argc, char *argv[]) {
     free(info->lkeys);
     free(info);
   }
-  
+
   // Close connections
   if (sendComm != nullptr) {
     res = netAdaptor->closeSend(sendComm);
@@ -338,7 +343,7 @@ int main(int argc, char *argv[]) {
     if (res != flagcxSuccess) {
       // Ignore error if already closed or not needed
     }
-  }    
+  }
   free(window);
 
   fatal(flagcxCommDestroy(comm), "flagcxCommDestroy failed", proc);

@@ -835,8 +835,10 @@ ib_connect_check:
   for (int q = 0; q < comm->base.nqps; q++) {
     flagcxIbSendCommDev *commDev = comm->devs + devIndex;
     flagcxIbDev *ibDev = flagcxIbDevs + commDev->base.ibDevN;
-    FLAGCXCHECK(flagcxIbCreateQp(ibDev->portNum, &commDev->base,
-                                 IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_ATOMIC, comm->base.qps + q));
+    FLAGCXCHECK(
+        flagcxIbCreateQp(ibDev->portNum, &commDev->base,
+                         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_ATOMIC,
+                         comm->base.qps + q));
     comm->base.qps[q].devIndex = devIndex;
     meta.qpInfo[q].qpn = comm->base.qps[q].qp->qp_num;
     meta.qpInfo[q].devIndex = comm->base.qps[q].devIndex;
@@ -1308,8 +1310,9 @@ ib_recv:
     // Local ibDevN
     ibDevN = rComm->devs[devIndex].base.ibDevN;
     ibDev = flagcxIbDevs + ibDevN;
-    FLAGCXCHECK(flagcxIbCreateQp(ibDev->portNum, &rCommDev->base,
-                                 IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_ATOMIC, qp));
+    FLAGCXCHECK(flagcxIbCreateQp(
+        ibDev->portNum, &rCommDev->base,
+        IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_ATOMIC, qp));
     qp->devIndex = devIndex;
     devIndex = (devIndex + 1) % rComm->base.ndevs;
 
@@ -2465,8 +2468,8 @@ flagcxResult_t flagcxIbPut(void *sendComm, uint64_t srcOff, uint64_t dstOff,
 }
 
 flagcxResult_t flagcxIbPutSignal(void *sendComm, uint64_t dstOff, int tag,
-                              int srcRank, int dstRank,
-                              void **gHandles, void **request) {
+                                 int srcRank, int dstRank, void **gHandles,
+                                 void **request) {
   struct flagcxIbSendComm *comm = (struct flagcxIbSendComm *)sendComm;
   struct flagcxIbGlobalHandleInfo *info =
       (struct flagcxIbGlobalHandleInfo *)gHandles;

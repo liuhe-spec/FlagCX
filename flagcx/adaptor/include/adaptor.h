@@ -278,7 +278,7 @@ struct flagcxNetAdaptor {
                            void **mhandles, void **request);
   flagcxResult_t (*test)(void *request, int *done, int *sizes);
 
-  // One-sided 
+  // One-sided
   flagcxResult_t (*put)(void *sendComm, uint64_t srcOff, uint64_t dstOff,
                         size_t size, int srcRank, int dstRank, void **gHandles,
                         void **request);
