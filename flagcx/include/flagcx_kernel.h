@@ -24,7 +24,9 @@ typedef enum {
   flagcxDevicePrimSend = 0,
   flagcxDevicePrimRecv = 1,
   flagcxDevicePrimTerm = 2,
-  flagcxDevicePrimWait = 3
+  flagcxDevicePrimWait = 3,
+  flagcxDevicePrimPut = 4,
+  flagcxDevicePrimSignal = 5
 } flagcxDevicePrim;
 
 typedef enum {
@@ -47,6 +49,12 @@ constexpr unsigned int flagcxDeviceTriggerOffPrim =
     flagcxDeviceTriggerOffDatatype + flagcxDeviceTriggerBitsDatatype;
 constexpr unsigned int flagcxDeviceTriggerBitsPrim = 4;
 constexpr unsigned int flagcxDeviceTriggerBitsFifoReserved = 1;
+
+// Offset fields in fst (when used for PUT operations)
+constexpr unsigned int flagcxDeviceTriggerOffSrcOffset = 32;
+constexpr unsigned int flagcxDeviceTriggerBitsSrcOffset = 32;
+constexpr unsigned int flagcxDeviceTriggerOffDstOffset = 0;
+constexpr unsigned int flagcxDeviceTriggerBitsDstOffset = 32;
 
 constexpr unsigned int flagcxReduceTriggerBitsAddr = 64;
 constexpr unsigned int flagcxReduceTriggerOffCount = 0;
@@ -75,6 +83,8 @@ struct flagcxDeviceTrigger {
   FLAGCX_HOST_DECORATOR uint64_t getPeerRank();
   FLAGCX_HOST_DECORATOR uint64_t getDatatype();
   FLAGCX_HOST_DECORATOR uint64_t getType();
+  FLAGCX_HOST_DECORATOR uint64_t getSrcOffset();
+  FLAGCX_HOST_DECORATOR uint64_t getDstOffset();
   FLAGCX_DEVICE_DECORATOR void setValue(uint64_t addr, uint64_t count,
                                         uint64_t peerRank, uint64_t datatype,
                                         uint64_t type);
