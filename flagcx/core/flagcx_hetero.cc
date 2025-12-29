@@ -1,9 +1,9 @@
 #include "flagcx_hetero.h"
 #include "group.h"
+#include "ib_common.h"
 #include "net.h"
 #include "transport.h"
 #include "type.h"
-#include "ib_common.h"
 
 flagcxResult_t flagcxHeteroSend(const void *sendbuff, size_t count,
                                 flagcxDataType_t datatype, int peer,
@@ -77,8 +77,14 @@ flagcxResult_t flagcxHeteroPut(flagcxHeteroComm_t comm, int peer,
     // Get sendNetResources from connector
     struct flagcxConnector *conn =
         &comm->channels[channelId].peers[peer]->send[connIndex];
+    // Check connection
+    if (conn->connected == 0 ||
+        conn->proxyConn.connection->transport != TRANSPORT_NET) {
+      return flagcxNotSupported;
+    }
     struct sendNetResources *resources =
-        (struct sendNetResources *)conn->proxyConn.connection->transportResources;
+        (struct sendNetResources *)
+            conn->proxyConn.connection->transportResources;
     void *sendComm = resources->netSendComm;
     int srcRank = comm->rank;
     int dstRank = peer;
@@ -87,8 +93,8 @@ flagcxResult_t flagcxHeteroPut(flagcxHeteroComm_t comm, int peer,
     uint64_t dstOff = dstOffset;
     void **gHandles = (void **)&globalOneSideHandles;
     void *request = NULL;
-    return comm->netAdaptor->put(sendComm, srcOff, dstOff, size, srcRank, dstRank,
-                                 gHandles, &request);
+    FLAGCXCHECK(comm->netAdaptor->put(sendComm, srcOff, dstOff, size, srcRank,
+                                      dstRank, gHandles, &request));
     return flagcxSuccess;
   }
   return flagcxNotSupported;
@@ -103,8 +109,14 @@ flagcxResult_t flagcxHeteroPutSignal(flagcxHeteroComm_t comm, int peer,
     // Get sendNetResources from connector
     struct flagcxConnector *conn =
         &comm->channels[channelId].peers[peer]->send[connIndex];
+    // Check connection
+    if (conn->connected == 0 ||
+        conn->proxyConn.connection->transport != TRANSPORT_NET) {
+      return flagcxNotSupported;
+    }
     struct sendNetResources *resources =
-        (struct sendNetResources *)conn->proxyConn.connection->transportResources;
+        (struct sendNetResources *)
+            conn->proxyConn.connection->transportResources;
     void *sendComm = resources->netSendComm;
     int srcRank = comm->rank;
     int dstRank = peer;
@@ -112,8 +124,8 @@ flagcxResult_t flagcxHeteroPutSignal(flagcxHeteroComm_t comm, int peer,
     uint64_t dstOff = dstOffset;
     void **gHandles = (void **)&globalOneSideHandles;
     void *request = NULL;
-    return comm->netAdaptor->putSignal(sendComm, dstOff, srcRank, dstRank,
-                                       gHandles, &request);
+    FLAGCXCHECK(comm->netAdaptor->putSignal(sendComm, dstOff, srcRank, dstRank,
+                                            gHandles, &request));
     return flagcxSuccess;
   }
   return flagcxNotSupported;
