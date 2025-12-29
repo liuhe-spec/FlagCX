@@ -174,4 +174,10 @@ void flagcxP2pDemo(const void *sendbuff, void *recvbuff, size_t count,
                    flagcxComm_t comm, flagcxStream_t stream);
 void flagcxLaunchCollectiveKernel(void *fifoBuffer, size_t nthreads,
                                   size_t nblocks, flagcxStream_t stream);
+void flagcxOnesidedSendDemo(const void *srcbuff, size_t srcOffset,
+                            size_t dstOffset, size_t signalOffset, size_t count,
+                            flagcxDataType_t datatype, int peer,
+                            flagcxComm_t comm, flagcxStream_t stream);
+void flagcxOnesidedRecvDemo(volatile uint64_t *waitAddr, uint64_t expectedValue,
+                            flagcxComm_t comm, flagcxStream_t stream);
 #endif
