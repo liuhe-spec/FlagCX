@@ -91,7 +91,7 @@ flagcxResult_t flagcxHeteroPut(flagcxHeteroComm_t comm, int peer,
 
     uint64_t srcOff = srcOffset;
     uint64_t dstOff = dstOffset;
-    void **gHandles = (void **)&globalOneSideHandles;
+    void **gHandles = (void **)globalOneSideHandles;
     void *request = NULL;
     FLAGCXCHECK(comm->netAdaptor->put(sendComm, srcOff, dstOff, size, srcRank,
                                       dstRank, gHandles, &request));
@@ -122,7 +122,7 @@ flagcxResult_t flagcxHeteroPutSignal(flagcxHeteroComm_t comm, int peer,
     int dstRank = peer;
 
     uint64_t dstOff = dstOffset;
-    void **gHandles = (void **)&globalOneSideHandles;
+    void **gHandles = (void **)globalOneSideHandles;
     void *request = NULL;
     FLAGCXCHECK(comm->netAdaptor->putSignal(sendComm, dstOff, srcRank, dstRank,
                                             gHandles, &request));
