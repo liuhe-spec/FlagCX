@@ -8,12 +8,12 @@
 #include "adaptor.h"
 #include "comm.h"
 #include "flagcx_hetero.h"
+#include "ib_common.h"
 #include "info.h"
 #include "net.h"
 #include "p2p.h"
 #include "socket.h"
 #include "transport.h"
-#include "ib_common.h"
 #define ENABLE_TIMER 0
 #include "timer.h"
 

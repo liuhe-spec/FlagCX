@@ -123,8 +123,8 @@ flagcxResult_t flagcxHeteroPutSignal(flagcxHeteroComm_t comm, int peer,
     uint64_t dstOff = dstOffset;
     void **gHandles = (void **)globalOneSideHandles;
     void *request = NULL;
-    FLAGCXCHECK(comm->netAdaptor->putSignal(sendComm, dstOff, dstRank,
-                                            gHandles, &request));
+    FLAGCXCHECK(comm->netAdaptor->putSignal(sendComm, dstOff, dstRank, gHandles,
+                                            &request));
     return flagcxSuccess;
   }
   return flagcxNotSupported;
