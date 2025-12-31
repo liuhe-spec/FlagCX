@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) {
   devHandle->streamCreate(&stream);
   void *dummyBuff = nullptr;
   devHandle->deviceMalloc(&dummyBuff, 1, flagcxMemDevice, NULL);
-  
+
   // Both sides must call GroupStart/GroupEnd together to ensure synchronization
   flagcxGroupStart(comm);
   if (isSender) {
@@ -193,12 +193,12 @@ int main(int argc, char *argv[]) {
     flagcxRecv(dummyBuff, 1, flagcxChar, senderRank, comm, stream);
   }
   flagcxGroupEnd(comm);
-  
+
   // Wait for the connection to be fully established
   devHandle->streamSynchronize(stream);
   devHandle->deviceFree(dummyBuff, flagcxMemDevice, NULL);
   devHandle->streamDestroy(stream);
-  
+
   // Additional barrier to ensure connection is ready
   MPI_Barrier(MPI_COMM_WORLD);
   // Benchmark loop
@@ -219,8 +219,8 @@ int main(int argc, char *argv[]) {
         uint8_t value = static_cast<uint8_t>((senderRank + i) & 0xff);
         std::memset((char *)window + current_send_offset, value, size);
 
-        res = flagcxHeteroPut(comm->hetero_comm, receiverRank, current_send_offset,
-                              current_recv_offset, size);
+        res = flagcxHeteroPut(comm->hetero_comm, receiverRank,
+                              current_send_offset, current_recv_offset, size);
         fatal(res, "flagcxHeteroPut warmup failed", proc);
         res = flagcxHeteroPutSignal(hetero, receiverRank, signalOffset);
         fatal(res, "flagcxHeteroPutSignal warmup failed", proc);
@@ -246,11 +246,12 @@ int main(int argc, char *argv[]) {
         uint8_t value = static_cast<uint8_t>((senderRank + i) & 0xff);
         std::memset((char *)window + current_send_offset, value, size);
 
-        res = flagcxHeteroPut(comm->hetero_comm, receiverRank, current_send_offset,
-                              current_recv_offset, size);
+        res = flagcxHeteroPut(comm->hetero_comm, receiverRank,
+                              current_send_offset, current_recv_offset, size);
         fatal(res, "flagcxHeteroPut failed", proc);
 
-        res = flagcxHeteroPutSignal(comm->hetero_comm, receiverRank, signalOffset);
+        res = flagcxHeteroPutSignal(comm->hetero_comm, receiverRank,
+                                    signalOffset);
         fatal(res, "flagcxHeteroPutSignal failed", proc);
       } else if (isReceiver) {
         res = netAdaptor->waitValue((void **)globalHandles, receiverRank,
