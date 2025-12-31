@@ -118,21 +118,9 @@ flagcxDeviceRecv(void *sendbuff, size_t count, flagcxDataType_t datatype,
                  int peer, void *fifoBuffer);
 FLAGCX_DEVICE_DECORATOR flagcxResult_t flagcxDeviceTerm(void *fifoBuffer);
 FLAGCX_DEVICE_DECORATOR flagcxResult_t flagcxDeviceWait(void *fifoBuffer);
-FLAGCX_DEVICE_DECORATOR flagcxResult_t
-flagcxDevicePut(const void *srcbuff, size_t srcOffset, size_t dstOffset,
-                size_t count, flagcxDataType_t datatype, int peer,
-                void *fifoBuffer);
-FLAGCX_DEVICE_DECORATOR flagcxResult_t
-flagcxDeviceSignal(size_t dstOffset, int peer, void *fifoBuffer);
 // FLAGCX_GLOBAL_DECORATOR void flagcxCollectiveKernel(flagcxFifo_t q); // TBD
 void flagcxP2pDemo(const void *sendbuff, void *recvbuff, size_t count,
                    flagcxDataType_t datatype, int sendPeer, int recvPeer,
                    flagcxComm_t comm, flagcxStream_t stream);
-void flagcxOnesidedSendDemo(const void *srcbuff, size_t srcOffset,
-                            size_t dstOffset, size_t signalOffset, size_t count,
-                            flagcxDataType_t datatype, int peer,
-                            flagcxComm_t comm, flagcxStream_t stream);
-void flagcxOnesidedRecvDemo(volatile uint64_t *waitAddr, uint64_t expectedValue,
-                            flagcxComm_t comm, flagcxStream_t stream);
 #endif // COMPILE_KERNEL
 #endif
