@@ -118,13 +118,12 @@ flagcxResult_t flagcxHeteroPutSignal(flagcxHeteroComm_t comm, int peer,
         (struct sendNetResources *)
             conn->proxyConn.connection->transportResources;
     void *sendComm = resources->netSendComm;
-    int srcRank = comm->rank;
     int dstRank = peer;
 
     uint64_t dstOff = dstOffset;
     void **gHandles = (void **)globalOneSideHandles;
     void *request = NULL;
-    FLAGCXCHECK(comm->netAdaptor->putSignal(sendComm, dstOff, srcRank, dstRank,
+    FLAGCXCHECK(comm->netAdaptor->putSignal(sendComm, dstOff, dstRank,
                                             gHandles, &request));
     return flagcxSuccess;
   }
